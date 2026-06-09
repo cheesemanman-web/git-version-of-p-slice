@@ -1,4 +1,4 @@
-name: Build IPA (P-Slice)
+name: Build IPA (P-Slice 3.4.2)
 
 on:
   workflow_dispatch:
@@ -17,9 +17,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # -------------------------
+      # -----------------------------
       # Install Haxe
-      # -------------------------
+      # -----------------------------
       - name: Install Haxe
         run: |
           brew update
@@ -27,37 +27,51 @@ jobs:
 
           haxelib setup ~/haxelib
 
-      # -------------------------
-      # EXACT LIB VERSIONS (MATCH PROJECT.XML ECOSYSTEM)
-      # -------------------------
-      - name: Install dependencies (LOCKED)
+      # -----------------------------
+      # Install EXACT P-Slice deps
+      # -----------------------------
+      - name: Install dependencies
         run: |
           haxelib install hxcpp 4.3.2
           haxelib install lime 8.3.2
           haxelib install openfl 9.5.2
 
-          haxelib install flixel 5.6.2
-          haxelib install flixel-addons 3.3.2
-
+          haxelib install flixel
+          haxelib install flixel-addons
           haxelib install tjson 1.4.0
           haxelib install flxanimate
 
           haxelib install hscript-iris 1.1.3
 
-          haxelib list
+      # -----------------------------
+      # IMPORTANT FIX (THIS IS THE MISSING PIECE)
+      # -----------------------------
+      - name: Initialize Lime/OpenFL
+        run: |
+          haxelib run lime setup -y
+          haxelib run openfl setup -y
 
-      # -------------------------
-      # FIX HAXE BUILD PATH
-      # -------------------------
+      # -----------------------------
+      # Debug environment (VERY IMPORTANT)
+      # -----------------------------
+      - name: Show haxelib state
+        run: |
+          haxelib list
+          haxe -version
+
+      # -----------------------------
+      # Build Haxe (correct path)
+      # -----------------------------
       - name: Build Haxe
         working-directory: ${{ github.workspace }}/PSliceEngine/haxe
         run: |
           haxe Build.hxml -D HXCPP_ARM64
 
-      # -------------------------
-      # XCODE BUILD (NO SIGNING)
-      # -------------------------
-      - name: Build iOS app
+      # -----------------------------
+      # Build iOS app
+      # -----------------------------
+      - name: Build Xcode project
+        working-directory: ${{ github.workspace }}
         run: |
           xcodebuild \
             -project PSliceEngine.xcodeproj \
@@ -67,9 +81,9 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             clean build
 
-      # -------------------------
-      # ARCHIVE
-      # -------------------------
+      # -----------------------------
+      # Archive
+      # -----------------------------
       - name: Archive
         run: |
           xcodebuild \
@@ -78,25 +92,25 @@ jobs:
             -sdk iphoneos \
             CODE_SIGNING_ALLOWED=NO \
             archive \
-            -archivePath build/PSliceEngine.xcarchive
+            -archivePath build/P-Slice.xcarchive
 
-      # -------------------------
-      # EXPORT IPA
-      # -------------------------
+      # -----------------------------
+      # Export IPA
+      # -----------------------------
       - name: Export IPA
         run: |
           mkdir -p export
 
           xcodebuild -exportArchive \
-            -archivePath build/PSliceEngine.xcarchive \
+            -archivePath build/P-Slice.xcarchive \
             -exportPath export \
             -exportOptionsPlist ExportOptions.plist
 
-      # -------------------------
-      # UPLOAD IPA
-      # -------------------------
+      # -----------------------------
+      # Upload IPA
+      # -----------------------------
       - name: Upload IPA
         uses: actions/upload-artifact@v4
         with:
-          name: P-Slice-IPA
+          name: P-Slice-3.4.2-IPA
           path: export/*.ipa
