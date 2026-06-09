@@ -1,0 +1,94 @@
+name: Build IPA (P-Slice)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-ios:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Haxe
+        run: |
+          brew update
+          brew install haxe
+
+      - name: Setup haxelib
+        run: |
+          export HAXELIB_ROOT="$HOME/haxelib"
+          mkdir -p $HAXELIB_ROOT
+          haxelib setup $HAXELIB_ROOT
+
+      - name: Install Haxe dependencies
+        run: |
+          export HAXELIB_ROOT="$HOME/haxelib"
+
+          haxelib install lime 8.3.2 --force
+          haxelib install openfl 9.5.2 --force
+          haxelib install flixel 5.6.2 --force
+          haxelib install flixel-addons 3.3.2 --force
+          haxelib install hxcpp 4.3.2 --force
+          haxelib install hscript 2.7.0 --force
+          haxelib install hscript-iris 1.1.3 --force
+          haxelib install tjson 1.4.0 --force
+
+          haxelib set lime 8.3.2
+          haxelib set openfl 9.5.2
+          haxelib set flixel 5.6.2
+          haxelib set hxcpp 4.3.2
+
+      - name: Locate Xcode project
+        id: findproj
+        run: |
+          PROJ=$(find . -name "*.xcodeproj" -type d | head -n 1)
+
+          if [ -z "$PROJ" ]; then
+            echo "ERROR: No xcodeproj found"
+            exit 1
+          fi
+
+          echo "FOUND=$PROJ"
+          echo "proj=$PROJ" >> $GITHUB_OUTPUT
+
+      - name: Build iOS (NO SIGNING)
+        run: |
+          set -e
+
+          cd "$(dirname "${{ steps.findproj.outputs.proj }}")"
+
+          xcodebuild \
+            -project "$(basename "${{ steps.findproj.outputs.proj }}")" \
+            -scheme PSliceEngine \
+            -configuration Release \
+            -sdk iphoneos \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            clean build
+
+      - name: Find built .app
+        run: |
+          APP=$(find ~/Library/Developer/Xcode/DerivedData -name "*.app" | grep -i PSlice | head -n 1)
+
+          if [ -z "$APP" ]; then
+            echo "ERROR: .app not found"
+            exit 1
+          fi
+
+          echo "APP=$APP"
+          echo "APP_PATH=$APP" >> $GITHUB_ENV
+
+      - name: Package IPA
+        run: |
+          mkdir -p Payload
+          cp -R "$APP_PATH" Payload/
+          zip -r PSliceEngine.ipa Payload
+
+      - name: Upload IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: PSliceEngine-IPA
+          path: PSliceEngine.ipa

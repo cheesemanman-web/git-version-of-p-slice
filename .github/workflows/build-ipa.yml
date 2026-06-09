@@ -1,0 +1,43 @@
+name: Build IPA (P-Slice)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-ios:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode.app
+
+      - name: Build Xcode project
+        run: |
+          cd PSliceEngine
+
+          xcodebuild \
+            -project PSliceEngine.xcodeproj \
+            -scheme PSliceEngine \
+            -configuration Release \
+            -sdk iphoneos \
+            clean build
+
+      - name: Find .app
+        run: |
+          APP=$(find ~/Library/Developer/Xcode/DerivedData -name "*.app" | head -n 1)
+          echo "APP=$APP" >> $GITHUB_ENV
+
+      - name: Create IPA
+        run: |
+          mkdir -p Payload
+          cp -R "$APP" Payload/
+          zip -r PSliceEngine.ipa Payload
+
+      - name: Upload IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: PSliceEngine-IPA
+          path: PSliceEngine.ipa

@@ -1,0 +1,32 @@
+# ============ ENTRY POINT ============
+-main Main
+
+# ============ SOURCE PATHS ============
+-cp source
+
+# ============ LIBS ============
+-lib lime
+-lib openfl
+-lib flixel
+-lib flixel-addons
+-lib hxcpp
+-lib hscript
+-lib hscript-iris
+-lib tjson
+
+# ============ DEFINES ============
+-D MODS_ALLOWED
+-D LUA_ALLOWED
+-D HSCRIPT_ALLOWED
+-D PSYCH_WATERMARKS
+-D BASE_GAME_FILES
+
+# ============ PLATFORM ============
+-D ios
+-D HXCPP_ARM64
+
+# ============ OPENFL/LIME MACROS ============
+--macro keep("Main")
+--macro flixel.system.macros.FlxDefines.run()
+--macro lime._internal.macros.DefineMacro.run()
+--macro openfl.utils._internal.ExtraParamsMacro.include()
