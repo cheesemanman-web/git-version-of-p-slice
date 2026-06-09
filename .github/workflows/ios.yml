@@ -17,31 +17,40 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install Haxe
+      # -------------------------
+      # Install Haxe + libraries
+      # -------------------------
+      - name: Install Haxe + deps
         run: |
           brew update
           brew install haxe
 
-      - name: Setup Haxelib
-        run: |
           haxelib setup ~/haxelib
           haxelib install lime
           haxelib install openfl
           haxelib install hxcpp
           haxelib install flixel
-          haxelib run lime setup
 
-      - name: Show versions
+      # -------------------------
+      # Show environment
+      # -------------------------
+      - name: Debug versions
         run: |
           haxe -version
           xcodebuild -version
 
-      - name: Build Haxe (manual compile step)
-        working-directory: ${{ github.workspace }}
+      # -------------------------
+      # Build Haxe (YOUR PATH FIXED)
+      # -------------------------
+      - name: Build Haxe
+        working-directory: ${{ github.workspace }}/PSliceEngine/haxe
         run: |
           haxe Build.hxml -D HXCPP_ARM64
 
-      - name: Clean + Build Xcode project
+      # -------------------------
+      # Build Xcode .app
+      # -------------------------
+      - name: Build Xcode project
         working-directory: ${{ github.workspace }}
         run: |
           xcodebuild \
@@ -50,4 +59,40 @@ jobs:
             -configuration Release \
             -sdk iphoneos \
             CODE_SIGNING_ALLOWED=NO \
-            clean build
+            clean build \
+            BUILD_DIR=build
+
+      # -------------------------
+      # Archive .app into .xcarchive
+      # -------------------------
+      - name: Create Archive
+        run: |
+          xcodebuild \
+            -project PSliceEngine.xcodeproj \
+            -scheme PSliceEngine \
+            -configuration Release \
+            -sdk iphoneos \
+            CODE_SIGNING_ALLOWED=NO \
+            archive \
+            -archivePath build/PSliceEngine.xcarchive
+
+      # -------------------------
+      # Export IPA
+      # -------------------------
+      - name: Export IPA
+        run: |
+          mkdir -p export
+
+          xcodebuild -exportArchive \
+            -archivePath build/PSliceEngine.xcarchive \
+            -exportPath export \
+            -exportOptionsPlist ExportOptions.plist
+
+      # -------------------------
+      # Upload IPA artifact
+      # -------------------------
+      - name: Upload IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: P-Slice-IPA
+          path: export/*.ipa
