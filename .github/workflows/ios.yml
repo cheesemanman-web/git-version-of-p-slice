@@ -20,9 +20,9 @@ jobs:
         run: |
           haxelib setup ~/haxelib
 
-      - name: Install EXACT dependencies
+      - name: Install dependencies
         run: |
-          haxelib install hxcpp 4.3.2
+          haxelib install hxcpp
           haxelib install lime 8.2.2
           haxelib install openfl 9.3.3
           haxelib install flixel 5.6.2
@@ -32,19 +32,25 @@ jobs:
           haxelib install flxanimate
           haxelib install hxvlc
 
-      - name: Set global versions
+      - name: Set dependency versions
         run: |
           haxelib set lime 8.2.2
           haxelib set openfl 9.3.3
           haxelib set flixel 5.6.2
 
-      - name: Show versions
+      - name: Verify Haxe install
         run: |
+          export PATH="/opt/homebrew/bin:$PATH"
+          which haxe
           haxe -version
-          haxelib list
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode.app
 
       - name: Build iOS (no signing)
         run: |
+          export PATH="/opt/homebrew/bin:$PATH"
+
           xcodebuild \
             -project PSliceEngine.xcodeproj \
             -scheme PSliceEngine \
