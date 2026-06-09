@@ -3,16 +3,19 @@
 -cp source
 -cp ../../source
 
---macro keep('IntIterator')
---macro flixel.system.macros.FlxDefines.run()
+-lib lime
+-lib openfl
+-lib flixel
+-lib flixel-addons
+-lib hxcpp
+-lib hscript
+-lib hscript-iris
+-lib tjson
 
--D lime=8.3.2
--D openfl=9.5.2
--D flixel=5.6.2
--D hxcpp=4.3.2
--D hscript=2.7.0
--D hscript-iris=1.1.3
--D tjson=1.4.0
+--remap flash:openfl
+
+--macro keep("IntIterator")
+--macro keep("Main")
 
 -D MODS_ALLOWED
 -D LUA_ALLOWED
@@ -20,18 +23,9 @@
 -D PSYCH_WATERMARKS
 -D BASE_GAME_FILES
 
---remap flash:openfl
-
 -D HXCPP_ARM64
 -D ios
 -D mobile
 
--D lime-native
--D openfl-native
--D hxcpp-cppia
-
 --macro lime._internal.macros.DefineMacro.run()
-
 --macro openfl.utils._internal.ExtraParamsMacro.include()
-
---macro keep("Main")
