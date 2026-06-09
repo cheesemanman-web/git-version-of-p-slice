@@ -11,14 +11,19 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode.app
+
       - name: Show Xcode version
         run: xcodebuild -version
 
-      - name: Clean build
+      - name: Clean + Build (no signing)
         run: |
           xcodebuild \
             -project PSliceEngine.xcodeproj \
             -scheme PSliceEngine \
             -configuration Release \
             -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            CODE_SIGNING_ALLOWED=NO \
             clean build
