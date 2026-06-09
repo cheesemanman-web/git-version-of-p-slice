@@ -7,6 +7,12 @@ jobs:
   build:
     runs-on: macos-latest
 
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_16.4.app/Contents/Developer
+      CODE_SIGNING_ALLOWED: NO
+      CODE_SIGNING_REQUIRED: NO
+      DEVELOPMENT_TEAM: ""
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -15,42 +21,33 @@ jobs:
         run: |
           brew update
           brew install haxe
-          export PATH="/opt/homebrew/bin:$PATH"
 
       - name: Setup Haxelib
         run: |
           haxelib setup ~/haxelib
-
-      - name: Install dependencies
-        run: |
+          haxelib install lime
+          haxelib install openfl
           haxelib install hxcpp
-          haxelib install lime 8.2.2
-          haxelib install openfl 9.3.3
-          haxelib install flixel 5.6.2
-          haxelib install flixel-addons 3.3.2
-          haxelib install hscript
-          haxelib install tjson
-          haxelib install flxanimate
-          haxelib install hxvlc
+          haxelib install flixel
+          haxelib run lime setup
 
-      # 🔥 IMPORTANT: build HAXE FIRST (outside Xcode)
-      - name: Build Haxe manually
+      - name: Show versions
         run: |
-          export PATH="/opt/homebrew/bin:$PATH"
-          haxe Build.hxml -D HXCPP_ARM64 -cpp export/ios
+          haxe -version
+          xcodebuild -version
 
-      - name: Select Xcode
-        run: sudo xcode-select -s /Applications/Xcode.app
-
-      - name: Build iOS (NO Haxe target)
+      - name: Build Haxe (manual compile step)
+        working-directory: ${{ github.workspace }}
         run: |
-          export PATH="/opt/homebrew/bin:$PATH"
+          haxe Build.hxml -D HXCPP_ARM64
 
+      - name: Clean + Build Xcode project
+        working-directory: ${{ github.workspace }}
+        run: |
           xcodebuild \
             -project PSliceEngine.xcodeproj \
             -scheme PSliceEngine \
             -configuration Release \
             -sdk iphoneos \
-            -destination 'generic/platform=iOS' \
             CODE_SIGNING_ALLOWED=NO \
             clean build
