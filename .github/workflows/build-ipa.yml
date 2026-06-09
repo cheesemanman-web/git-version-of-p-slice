@@ -16,7 +16,7 @@ jobs:
           brew update
           brew install haxe
 
-      - name: Setup Haxelib
+      - name: Setup haxelib
         run: |
           mkdir -p "$HOME/haxelib"
           haxelib setup "$HOME/haxelib"
@@ -39,16 +39,15 @@ jobs:
           haxelib set flixel 6.1.2
           haxelib set hxcpp 4.3.2
 
-      - name: Verify Main.hx exists
+      - name: Verify repo structure
         run: |
-          ls -R PSliceEngine/source
+          ls -R
 
-      - name: Build iOS (FIXED COMMAND)
+      - name: Build iOS
         run: |
           export PATH="/opt/homebrew/bin:$PATH"
-          cd PSliceEngine
 
-          haxelib run lime build ios -release
+          lime build ios -release
 
       - name: Find .app
         run: |
