@@ -11,13 +11,32 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Install Haxe
+        run: |
+          brew update
+          brew install haxe
+
+      - name: Install Haxe dependencies
+        run: |
+          haxelib setup ~/haxelib
+          haxelib install hxcpp
+          haxelib install flixel
+          haxelib install flixel-addons
+          haxelib install openfl
+          haxelib install lime
+          haxelib install hscript
+
+      - name: Setup Haxe libs
+        run: |
+          haxelib run lime setup
+
+      - name: Show Haxe version
+        run: haxe -version
+
       - name: Select Xcode
         run: sudo xcode-select -s /Applications/Xcode.app
 
-      - name: Show Xcode version
-        run: xcodebuild -version
-
-      - name: Clean + Build (no signing)
+      - name: Build iOS (no signing)
         run: |
           xcodebuild \
             -project PSliceEngine.xcodeproj \
