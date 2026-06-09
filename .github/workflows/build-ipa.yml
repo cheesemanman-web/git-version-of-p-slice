@@ -11,62 +11,49 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install Haxe
+      - name: Install Haxe + tools
         run: |
           brew update
           brew install haxe
 
-      - name: Setup haxelib
+          haxelib setup $HOME/haxelib
+
+      - name: Install dependencies (STABLE P-SLICE STACK)
         run: |
-          export HAXELIB_ROOT="$HOME/haxelib"
-          mkdir -p $HAXELIB_ROOT
-          haxelib setup $HAXELIB_ROOT
+          export PATH="/opt/homebrew/bin:$PATH"
 
-      - name: Install dependencies
-        run: |
-          export HAXELIB_ROOT="$HOME/haxelib"
+          haxelib install lime 8.1.2 --quiet
+          haxelib install openfl 9.3.3 --quiet
+          haxelib install flixel 6.1.2 --quiet
+          haxelib install flixel-addons 3.3.2 --quiet
+          haxelib install hxcpp 4.3.2 --quiet
+          haxelib install hscript 2.7.0 --quiet
+          haxelib install hscript-iris 1.1.3 --quiet
+          haxelib install tjson 1.4.0 --quiet
 
-          haxelib install lime 8.3.2 --force
-          haxelib install openfl 9.5.2 --force
-          haxelib install flixel 5.6.2 --force
-          haxelib install flixel-addons 3.3.2 --force
-
-          haxelib install hxcpp 4.3.2 --force
-          haxelib install hscript 2.7.0 --force
-          haxelib install hscript-iris 1.1.3 --force
-          haxelib install tjson 1.4.0 --force
-
-          haxelib set lime 8.3.2
-          haxelib set openfl 9.5.2
-          haxelib set flixel 5.6.2
+          haxelib set lime 8.1.2
+          haxelib set openfl 9.3.3
+          haxelib set flixel 6.1.2
           haxelib set hxcpp 4.3.2
 
       - name: Verify project structure
         run: |
           ls -R
 
-      - name: Build Haxe (FIXED PATH)
+      - name: Build iOS (LIME - CORRECT WAY)
         run: |
-          export HAXELIB_ROOT="$HOME/haxelib"
-          export HAXE_STD_PATH="/opt/homebrew/lib/haxe/std"
-
-          cd PSliceEngine/haxe
-          haxe Build.hxml -D HXCPP_ARM64
-
-      - name: Build iOS app
-        run: |
+          export PATH="/opt/homebrew/bin:$PATH"
           cd PSliceEngine
-          xcodebuild \
-            -project PSliceEngine.xcodeproj \
-            -scheme PSliceEngine \
-            -configuration Release \
-            -sdk iphoneos \
-            build
+
+          lime build ios -release
+
+      - name: Find .app
+        run: |
+          APP=$(find "$HOME/Library/Developer/Xcode/DerivedData" -name "*.app" | head -n 1)
+          echo "APP=$APP" >> $GITHUB_ENV
 
       - name: Package IPA
         run: |
-          APP=$(find ~/Library/Developer/Xcode/DerivedData -name "*.app" | head -n 1)
-
           mkdir -p Payload
           cp -R "$APP" Payload/
 
