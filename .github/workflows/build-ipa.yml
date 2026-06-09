@@ -16,13 +16,13 @@ jobs:
           brew update
           brew install haxe
 
-      - name: Setup haxelib (CRITICAL FIX)
+      - name: Setup haxelib
         run: |
           export HAXELIB_ROOT="$HOME/haxelib"
           mkdir -p $HAXELIB_ROOT
           haxelib setup $HAXELIB_ROOT
 
-      - name: Install dependencies (LOCKED VERSION SET)
+      - name: Install dependencies
         run: |
           export HAXELIB_ROOT="$HOME/haxelib"
 
@@ -41,24 +41,19 @@ jobs:
           haxelib set flixel 5.6.2
           haxelib set hxcpp 4.3.2
 
-      - name: DEBUG - verify flixel is visible
+      - name: Verify project structure
         run: |
-          export HAXELIB_ROOT="$HOME/haxelib"
-          haxelib list
-          ls $HAXELIB_ROOT/flixel
+          ls -R
 
-      - name: Build Haxe (FIXED CONTEXT)
+      - name: Build Haxe (FIXED PATH)
         run: |
           export HAXELIB_ROOT="$HOME/haxelib"
           export HAXE_STD_PATH="/opt/homebrew/lib/haxe/std"
 
-          # THIS IS THE CRITICAL FIX:
-          export HAXE_LIB_PATH="$HAXELIB_ROOT"
-
           cd PSliceEngine/haxe
-          haxe Build.hxml -D HXCPP_ARM64 -lib flixel -lib lime -lib openfl
+          haxe Build.hxml -D HXCPP_ARM64
 
-      - name: Build iOS
+      - name: Build iOS app
         run: |
           cd PSliceEngine
           xcodebuild \
@@ -70,7 +65,7 @@ jobs:
 
       - name: Package IPA
         run: |
-          APP=$(find ~/Library/Developer/Xcode/DerivedData -name "PSliceEngine.app" | head -n 1)
+          APP=$(find ~/Library/Developer/Xcode/DerivedData -name "*.app" | head -n 1)
 
           mkdir -p Payload
           cp -R "$APP" Payload/
