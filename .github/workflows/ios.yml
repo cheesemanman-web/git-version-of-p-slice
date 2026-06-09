@@ -1,0 +1,26 @@
+name: Build iOS
+
+on:
+  workflow_dispatch:
+
+jobs:
+  inspect:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Show Xcode version
+        run: xcodebuild -version
+
+      - name: Show repository files
+        run: ls -R
+
+      - name: List Xcode project contents
+        run: |
+          find . -name "*.xcodeproj"
+
+      - name: Show project schemes
+        run: |
+          xcodebuild -list -project PSliceEngine.xcodeproj
