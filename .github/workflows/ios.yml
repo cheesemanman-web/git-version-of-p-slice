@@ -8,105 +8,88 @@ jobs:
     runs-on: macos-latest
 
     steps:
-      # =========================
-      # Checkout
-      # =========================
       - name: Checkout
         uses: actions/checkout@v4
 
       # =========================
-      # Install Haxe
+      # Install Haxe + deps
       # =========================
-      - name: Install Haxe
+      - name: Install Haxe + tools
         run: |
           brew update
           brew install haxe
 
-      # =========================
-      # Setup Haxelib (FIXED)
-      # =========================
-      - name: Setup Haxelib
-        run: |
-          export HAXELIB_PATH=$HOME/haxelib
-          mkdir -p $HAXELIB_PATH
-          haxelib setup $HAXELIB_PATH
+          export HAXELIB_ROOT="$HOME/haxelib"
+          mkdir -p $HAXELIB_ROOT
+          haxelib setup $HAXELIB_ROOT
 
       # =========================
-      # Install dependencies
+      # Install libraries (IMPORTANT: no manual macro calls)
       # =========================
-      - name: Install Haxe libraries
+      - name: Install Haxe libs
         run: |
-          export HAXELIB_PATH=$HOME/haxelib
+          export HAXELIB_ROOT="$HOME/haxelib"
 
           haxelib install lime 8.3.2 --always
           haxelib install openfl 9.5.2 --always
-          haxelib install hxcpp 4.3.2 --always
-          haxelib install flixel --always
+          haxelib install flixel 5.6.2 --always
           haxelib install flixel-addons 3.3.2 --always
-          haxelib install tjson 1.4.0 --always
-          haxelib install hscript-iris 1.1.3 --always
-          haxelib install flxanimate --always
 
-      # =========================
-      # IMPORTANT: fix Lime macros
-      # =========================
-      - name: Activate & fix Lime/OpenFL
-        run: |
-          export HAXELIB_PATH=$HOME/haxelib
+          haxelib install hxcpp 4.3.2 --always
+          haxelib install hscript 2.7.0 --always
+          haxelib install hscript-iris 1.1.3 --always
+          haxelib install tjson 1.4.0 --always
 
           haxelib set lime 8.3.2
           haxelib set openfl 9.5.2
+          haxelib set flixel 5.6.2
           haxelib set hxcpp 4.3.2
 
-          haxelib run lime setup
-          haxelib run lime rebuild hxcpp
-
       # =========================
-      # Debug versions
+      # Fix Lime environment (CRITICAL)
       # =========================
-      - name: Show versions
+      - name: Fix Haxe environment
         run: |
-          haxe -version
-          haxelib list
+          echo "export HAXELIB_ROOT=$HOME/haxelib" >> $GITHUB_ENV
+          echo "export HAXE_STD_PATH=/opt/homebrew/lib/haxe/std" >> $GITHUB_ENV
+          echo "/opt/homebrew/bin" >> $GITHUB_PATH
 
       # =========================
-      # Compile Haxe (FIXED PATH)
+      # Build iOS project using Lime (NOT raw haxe)
       # =========================
-      - name: Compile Haxe
+      - name: Build iOS (Lime)
         run: |
-          export HAXELIB_PATH=$HOME/haxelib
-          export HAXE_STD_PATH=/opt/homebrew/lib/haxe/std
-
-          cd PSliceEngine/haxe
-          haxe Build.hxml -D HXCPP_ARM64
+          export HAXELIB_ROOT="$HOME/haxelib"
+          lime test ios -release
 
       # =========================
       # Build Xcode project
       # =========================
       - name: Build Xcode app
         run: |
+          cd export/ios/bin
+
           xcodebuild \
-            -project PSliceEngine.xcodeproj \
-            -scheme PSliceEngine \
+            -project *.xcodeproj \
+            -scheme * \
             -configuration Release \
             -sdk iphoneos \
-            CODE_SIGNING_ALLOWED=NO \
-            CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGN_IDENTITY="" \
-            DEVELOPMENT_TEAM="" \
-            clean build
+            build
 
       # =========================
       # Package IPA
       # =========================
-      - name: Create IPA
+      - name: Package IPA
         run: |
-          APP_PATH=$(find ~/Library/Developer/Xcode/DerivedData -name "PSliceEngine.app" | head -n 1)
+          APP=$(find ~/Library/Developer/Xcode/DerivedData -name "*.app" | head -n 1)
 
-          echo "Found app: $APP_PATH"
+          if [ -z "$APP" ]; then
+            echo "ERROR: .app not found"
+            exit 1
+          fi
 
           mkdir -p Payload
-          cp -R "$APP_PATH" Payload/
+          cp -R "$APP" Payload/
 
           zip -r PSliceEngine.ipa Payload
 
