@@ -1,13 +1,11 @@
--main ApplicationMain
+# ============ ENTRY POINT ============
+-main Main
 
-# Main project sources
+# ============ SOURCE PATHS ============
+-cp source
 -cp ../source
 
-# Keep the game's entry point
---macro keep("Main")
---macro keep("IntIterator")
-
-# Libraries
+# ============ LIBS ============
 -lib lime
 -lib openfl
 -lib flixel
@@ -17,20 +15,25 @@
 -lib hscript-iris
 -lib tjson
 
-# OpenFL compatibility
---remap flash:openfl
-
-# Defines
--D HXCPP_ARM64
--D ios
--D mobile
-
+# ============ DEFINES ============
 -D MODS_ALLOWED
 -D LUA_ALLOWED
 -D HSCRIPT_ALLOWED
 -D PSYCH_WATERMARKS
 -D BASE_GAME_FILES
 
-# Macros
+# ============ PLATFORM ============
+-D ios
+-D mobile
+-D HXCPP_ARM64
+
+# ============ OPENFL/LIME MACROS ============
+--macro keep("Main")
+--macro keep("IntIterator")
+
+--macro flixel.system.macros.FlxDefines.run()
 --macro lime._internal.macros.DefineMacro.run()
 --macro openfl.utils._internal.ExtraParamsMacro.include()
+
+# ============ OUTPUT ============
+-cpp build/ios
