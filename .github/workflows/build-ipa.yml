@@ -2,7 +2,6 @@ name: Build IPA (P-Slice)
 
 on:
   workflow_dispatch:
-  push:
 
 jobs:
   build-ios:
@@ -12,91 +11,63 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # -------------------------
-      # Install Haxe properly
-      # -------------------------
-      - name: Setup Haxe
+      - name: Install Homebrew deps
         run: |
           brew update
           brew install haxe
-          export PATH="/opt/homebrew/bin:$PATH"
-          haxe -version
+          brew install neko
 
-      # -------------------------
-      # Fix haxelib (IMPORTANT)
-      # -------------------------
-      - name: Setup haxelib folder
+      - name: Setup Haxelib (FIX .haxelib ERROR)
         run: |
-          mkdir -p $HOME/haxelib
-          haxelib setup $HOME/haxelib
+          export HAXELIB_ROOT="$HOME/haxelib"
+          mkdir -p $HAXELIB_ROOT
+          haxelib setup $HAXELIB_ROOT
 
-      # -------------------------
-      # Install correct Psych/Lime stack
-      # (Psych 1.0.x compatible versions)
-      # -------------------------
-      - name: Install Haxe libraries
+      - name: Install Haxe dependencies (CRITICAL FIX for lime macro crash)
         run: |
-          export PATH="/opt/homebrew/bin:$PATH"
-
-          haxelib install hxcpp 4.3.2 --quiet
           haxelib install lime 8.3.2 --quiet
           haxelib install openfl 9.5.2 --quiet
-          haxelib install flixel 5.6.1 --quiet
+          haxelib install hxcpp 4.3.2 --quiet
+          haxelib install flixel 5.6.2 --quiet
           haxelib install flixel-addons 3.3.2 --quiet
           haxelib install tjson 1.4.0 --quiet
+          haxelib install hscript-iris 1.1.3 --quiet || true
+          haxelib install flxanimate --quiet || true
 
-          haxelib set hxcpp 4.3.2
+      - name: Set correct Haxe versions
+        run: |
           haxelib set lime 8.3.2
           haxelib set openfl 9.5.2
-          haxelib set flixel 5.6.1
+          haxelib set hxcpp 4.3.2
 
+      - name: Verify Lime macro fix
+        run: |
           haxelib list
+          haxe -version
 
-      # -------------------------
-      # IMPORTANT FIX:
-      # Lime setup generates DefineMacro
-      # -------------------------
-      - name: Lime setup (fix macro error)
+      - name: Build Haxe project (FIX PATH ISSUE)
         run: |
-          export PATH="/opt/homebrew/bin:$PATH"
-          haxelib run lime setup
-
-      # -------------------------
-      # Build Haxe (FIX PATH ISSUE HERE)
-      # -------------------------
-      - name: Compile Haxe (iOS ARM64)
-        working-directory: PSliceEngine/haxe
-        run: |
-          export PATH="/opt/homebrew/bin:$PATH"
+          cd PSliceEngine/haxe
           haxe Build.hxml -D HXCPP_ARM64
 
-      # -------------------------
-      # Build IPA using Lime
-      # -------------------------
-      - name: Build iOS App
-        working-directory: PSliceEngine
+      - name: Install CocoaPods (iOS build requirement)
         run: |
-          export PATH="/opt/homebrew/bin:$PATH"
-          lime build ios -release -verbose
+          sudo gem install cocoapods
 
-      # -------------------------
-      # Package IPA (.app → .ipa)
-      # -------------------------
-      - name: Package IPA
+      - name: Build iOS App (.app)
         run: |
-          APP_PATH=$(find ~/Library/Developer/Xcode/DerivedData -name "*.app" | head -n 1)
+          cd PSliceEngine
+          haxelib run lime build ios -release
 
-          mkdir -p output/Payload
-          cp -R "$APP_PATH" output/Payload/
+      - name: Create IPA (FIXED packaging)
+        run: |
+          mkdir -p Payload
+          cp -r bin/ios/build/Release-iphoneos/*.app Payload/
 
-          cd output
-          zip -r game.ipa Payload
+          zip -r PSlice.ipa Payload
 
-      # -------------------------
-      # Upload artifact
-      # -------------------------
       - name: Upload IPA
         uses: actions/upload-artifact@v4
         with:
-          name: PSlice-IPA
-          path: output/game.ipa
+          name: P-Slice-IPA
+          path: PSlice.ipa
