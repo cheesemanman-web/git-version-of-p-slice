@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project
+	xmlns="http://lime.openfl.org/project/1.0.4"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://lime.openfl.org/project/1.0.4 http://lime.openfl.org/xsd/project-1.0.4.xsd">
+
+	<!-- ========================= APP SETTINGS ========================= -->
+
+	<app title="Friday Night Funkin': P-Slice Engine"
+		file="PSliceEngine"
+		packageName="com.mikolka9144.pslice"
+		package="com.mikolka9144.pslice"
+		main="Main"
+		version="3.4.2"
+		company="mikolka9144" />
+
+	<meta build-number="342" />
+
+	<!-- ========================= ANDROID (SAFE DEFAULTS) ========================= -->
+
+	<config type="android" gradle-version="8.10.2" gradle-plugin="8.8.0"
+		ndkVersion="27.3"
+		minimum-sdk-version="26"
+		target-sdk-version="35" />
+
+	<!-- ========================= DEFINES ========================= -->
+
+	<haxedef name="LINC_LUA_RELATIVE_DYNAMIC_LIB" />
+
+	<app preloader="mikolka.vslice.FunkinPreloader" />
+
+	<set name="SWF_VERSION" value="11.8" />
+
+	<define name="MODS_ALLOWED" if="desktop || mobile" />
+	<define name="OPENFL_LOOKUP" />
+	<define name="NATIVE_LOOKUP" if="MODS_ALLOWED" />
+
+	<define name="HSCRIPT_ALLOWED" if="desktop || mobile" />
+	<define name="LUA_ALLOWED" if="cpp" />
+
+	<define name="DISCORD_ALLOWED" if="desktop" unless="hl" />
+
+	<define name="BASE_GAME_FILES" />
+	<define name="TOUCH_CONTROLS_ALLOWED" if="mobile || web || debug" />
+	<define name="CHECK_FOR_UPDATES" unless="web || hl" />
+
+	<define name="VIDEOS_ALLOWED" if="desktop || mobile || web" unless="32bits || hl" />
+	<define name="ATSC_SUPPORT" unless="web" />
+
+	<define name="TOUCH_HERE_TO_PLAY" if="TOUCH_CONTROLS_ALLOWED debug" />
+
+	<define name="ACHIEVEMENTS_ALLOWED" />
+	<define name="TRANSLATIONS_ALLOWED" unless="web" />
+
+	<define name="SHOW_LOADING_SCREEN" />
+	<define name="STRICT_LOADING_SCREEN" if="mobile SHOW_LOADING_SCREEN" />
+
+	<define name="MULTITHREADED_LOADING" if="cpp" />
+	<define name="PSYCH_WATERMARKS" />
+	<define name="TITLE_SCREEN_EASTER_EGG" />
+
+	<!-- ========================= DEBUG ========================= -->
+
+	<section if="debug">
+		<define name="OPENFL_LOOKUP" />
+		<define name="NATIVE_LOOKUP" />
+		<define name="IRIS_DEBUG" />
+		<define name="FEATURE_DEBUG_FUNCTIONS" />
+	</section>
+
+	<!-- ========================= WINDOW ========================= -->
+
+	<window width="1280" height="720" fps="60" background="#000000"
+		hardware="true" vsync="false" allow-high-dpi="true" />
+
+	<window if="html5" resizable="true" fullscreen="true" />
+	<window if="desktop" orientation="landscape" fullscreen="false" resizable="true" />
+	<window if="mobile" orientation="landscape" fullscreen="true" resizable="false" />
+
+	<!-- ========================= PATHS ========================= -->
+
+	<classpath name="source" />
+
+	<!-- ========================= ASSETS ========================= -->
+
+	<assets path="assets/fonts" />
+	<assets path="assets/shared" />
+	<assets path="assets/videos" if="VIDEOS_ALLOWED" embed="false" />
+	<assets path="assets/mobile" rename="assets/shared/mobile" if="TOUCH_CONTROLS_ALLOWED" />
+
+	<assets path="assets/week_assets" rename="assets" />
+
+	<assets path="example_mods" rename="mods" embed="false" if="MODS_ALLOWED" />
+
+	<!-- ========================= LIBRARIES ========================= -->
+
+	<haxelib name="flixel" />
+	<haxelib name="flixel-addons" version="3.3.2" />
+	<haxelib name="hxcpp" />
+	<haxelib name="tjson" version="1.4.0" />
+	<haxelib name="grig.audio" />
+	<haxelib name="funkin.vis" />
+	<haxelib name="flxanimate" />
+
+	<haxelib name="linc_luajit" if="LUA_ALLOWED" />
+	<haxelib name="hscript-iris" if="HSCRIPT_ALLOWED" version="1.1.3" />
+
+	<haxelib name="hxdiscord_rpc" if="DISCORD_ALLOWED" />
+
+	<!-- ========================= IOS / MAC ========================= -->
+
+	<config:ios category_type="public.app-category.music-games" />
+	<config:mac category_type="public.app-category.music-games" />
+
+	<section if="ios">
+		<haxedef name="HXCPP_ARM64" />
+	</section>
+
+	<!-- ========================= CLEANED: NO FIREBASE ========================= -->
+	<!-- Firebase/Crashlytics removed for Windows compatibility -->
+
+	<!-- ========================= FINAL FLAGS ========================= -->
+
+	<haxedef name="FLX_NO_FOCUS_LOST_SCREEN" />
+	<haxedef name="lime_disable_assets_version" />
+	<haxedef name="no-deprecation-warnings" />
+	<haxedef name="message.reporting" value="pretty" />
+
+</project>
