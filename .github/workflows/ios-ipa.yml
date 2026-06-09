@@ -11,18 +11,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install Homebrew dependencies
+      - name: Install Haxe
         run: |
           brew update
           brew install haxe
 
-      - name: Setup Haxelib
+      - name: Setup haxelib
         run: |
           export HAXELIB_ROOT="$HOME/haxelib"
           mkdir -p $HAXELIB_ROOT
           haxelib setup $HAXELIB_ROOT
 
-      - name: Install Haxe libraries
+      - name: Install Haxe dependencies
         run: |
           export HAXELIB_ROOT="$HOME/haxelib"
 
@@ -40,26 +40,20 @@ jobs:
           haxelib set flixel 5.6.2
           haxelib set hxcpp 4.3.2
 
-      - name: Verify repo structure
-        run: |
-          echo "=== ROOT ==="
-          ls -R .
-
-      # IMPORTANT FIX: find real xcodeproj dynamically
       - name: Locate Xcode project
         id: findproj
         run: |
           PROJ=$(find . -name "*.xcodeproj" -type d | head -n 1)
 
           if [ -z "$PROJ" ]; then
-            echo "No .xcodeproj found!"
+            echo "ERROR: No xcodeproj found"
             exit 1
           fi
 
-          echo "FOUND: $PROJ"
+          echo "FOUND=$PROJ"
           echo "proj=$PROJ" >> $GITHUB_OUTPUT
 
-      - name: Build iOS App (Xcode)
+      - name: Build iOS (NO SIGNING)
         run: |
           set -e
 
@@ -70,6 +64,9 @@ jobs:
             -scheme PSliceEngine \
             -configuration Release \
             -sdk iphoneos \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
             clean build
 
       - name: Find built .app
@@ -77,18 +74,17 @@ jobs:
           APP=$(find ~/Library/Developer/Xcode/DerivedData -name "*.app" | grep -i PSlice | head -n 1)
 
           if [ -z "$APP" ]; then
-            echo "No .app found in DerivedData!"
+            echo "ERROR: .app not found"
             exit 1
           fi
 
-          echo "APP FOUND: $APP"
+          echo "APP=$APP"
           echo "APP_PATH=$APP" >> $GITHUB_ENV
 
-      - name: Create IPA
+      - name: Package IPA
         run: |
           mkdir -p Payload
           cp -R "$APP_PATH" Payload/
-
           zip -r PSliceEngine.ipa Payload
 
       - name: Upload IPA
