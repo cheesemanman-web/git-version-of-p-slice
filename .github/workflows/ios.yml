@@ -1,4 +1,4 @@
-name: Build IPA
+name: Build IPA (P-Slice)
 
 on:
   workflow_dispatch:
@@ -8,46 +8,17 @@ jobs:
     runs-on: macos-13
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Decode certificate
-        run: |
-          echo "${{ secrets.IOS_CERTIFICATE_BASE64 }}" | base64 --decode > cert.p12
+      - name: Show Xcode version
+        run: xcodebuild -version
 
-      - name: Decode provisioning profile
-        run: |
-          echo "${{ secrets.IOS_PROFILE_BASE64 }}" | base64 --decode > profile.mobileprovision
-
-      - name: Install certificate
-        run: |
-          security create-keychain -p "" build.keychain
-          security import cert.p12 -k build.keychain -P "${{ secrets.P12_PASSWORD }}" -T /usr/bin/codesign
-          security list-keychains -s build.keychain
-
-      - name: Install provisioning profile
-        run: |
-          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
-          cp profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/
-
-      - name: Build archive
+      - name: Clean build
         run: |
           xcodebuild \
             -project PSliceEngine.xcodeproj \
             -scheme PSliceEngine \
             -configuration Release \
             -sdk iphoneos \
-            clean archive \
-            -archivePath build/App.xcarchive
-
-      - name: Export IPA
-        run: |
-          xcodebuild -exportArchive \
-            -archivePath build/App.xcarchive \
-            -exportPath build \
-            -exportOptionsPlist ExportOptions.plist
-
-      - name: Upload IPA
-        uses: actions/upload-artifact@v4
-        with:
-          name: IPA
-          path: build/*.ipa
+            clean build
