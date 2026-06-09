@@ -1,0 +1,102 @@
+name: Build IPA (P-Slice)
+
+on:
+  workflow_dispatch:
+  push:
+
+jobs:
+  build-ios:
+    runs-on: macos-14
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # -------------------------
+      # Install Haxe properly
+      # -------------------------
+      - name: Setup Haxe
+        run: |
+          brew update
+          brew install haxe
+          export PATH="/opt/homebrew/bin:$PATH"
+          haxe -version
+
+      # -------------------------
+      # Fix haxelib (IMPORTANT)
+      # -------------------------
+      - name: Setup haxelib folder
+        run: |
+          mkdir -p $HOME/haxelib
+          haxelib setup $HOME/haxelib
+
+      # -------------------------
+      # Install correct Psych/Lime stack
+      # (Psych 1.0.x compatible versions)
+      # -------------------------
+      - name: Install Haxe libraries
+        run: |
+          export PATH="/opt/homebrew/bin:$PATH"
+
+          haxelib install hxcpp 4.3.2 --quiet
+          haxelib install lime 8.3.2 --quiet
+          haxelib install openfl 9.5.2 --quiet
+          haxelib install flixel 5.6.1 --quiet
+          haxelib install flixel-addons 3.3.2 --quiet
+          haxelib install tjson 1.4.0 --quiet
+
+          haxelib set hxcpp 4.3.2
+          haxelib set lime 8.3.2
+          haxelib set openfl 9.5.2
+          haxelib set flixel 5.6.1
+
+          haxelib list
+
+      # -------------------------
+      # IMPORTANT FIX:
+      # Lime setup generates DefineMacro
+      # -------------------------
+      - name: Lime setup (fix macro error)
+        run: |
+          export PATH="/opt/homebrew/bin:$PATH"
+          haxelib run lime setup
+
+      # -------------------------
+      # Build Haxe (FIX PATH ISSUE HERE)
+      # -------------------------
+      - name: Compile Haxe (iOS ARM64)
+        working-directory: PSliceEngine/haxe
+        run: |
+          export PATH="/opt/homebrew/bin:$PATH"
+          haxe Build.hxml -D HXCPP_ARM64
+
+      # -------------------------
+      # Build IPA using Lime
+      # -------------------------
+      - name: Build iOS App
+        working-directory: PSliceEngine
+        run: |
+          export PATH="/opt/homebrew/bin:$PATH"
+          lime build ios -release -verbose
+
+      # -------------------------
+      # Package IPA (.app → .ipa)
+      # -------------------------
+      - name: Package IPA
+        run: |
+          APP_PATH=$(find ~/Library/Developer/Xcode/DerivedData -name "*.app" | head -n 1)
+
+          mkdir -p output/Payload
+          cp -R "$APP_PATH" output/Payload/
+
+          cd output
+          zip -r game.ipa Payload
+
+      # -------------------------
+      # Upload artifact
+      # -------------------------
+      - name: Upload IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: PSlice-IPA
+          path: output/game.ipa
