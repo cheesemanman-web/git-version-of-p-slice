@@ -39,17 +39,21 @@ jobs:
           haxelib set flixel 6.1.2
           haxelib set hxcpp 4.3.2
 
-      - name: Verify structure
+      - name: Find project.xml location
         run: |
-          ls -R
+          find . -name "project.xml"
 
-      - name: Build iOS (CORRECT WAY)
+      - name: Build iOS (auto-detect project)
         run: |
-          cd PSliceEngine
+          export PATH="/opt/homebrew/bin:$PATH"
 
+          PROJECT=$(find . -name "project.xml" | head -n 1)
+          echo "Using project: $PROJECT"
+
+          cd "$(dirname "$PROJECT")"
           haxelib run lime build ios -release
 
-      - name: Locate .app
+      - name: Find .app
         run: |
           APP=$(find "$HOME/Library/Developer/Xcode/DerivedData" -name "*.app" | head -n 1)
           echo "APP=$APP" >> $GITHUB_ENV
@@ -58,7 +62,6 @@ jobs:
         run: |
           mkdir -p Payload
           cp -R "$APP" Payload/
-
           zip -r PSliceEngine.ipa Payload
 
       - name: Upload IPA
