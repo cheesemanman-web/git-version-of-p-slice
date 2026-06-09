@@ -1,8 +1,13 @@
 -main ApplicationMain
 
--cp source
--cp ../../source
+# Main project sources
+-cp ../source
 
+# Keep the game's entry point
+--macro keep("Main")
+--macro keep("IntIterator")
+
+# Libraries
 -lib lime
 -lib openfl
 -lib flixel
@@ -12,10 +17,13 @@
 -lib hscript-iris
 -lib tjson
 
+# OpenFL compatibility
 --remap flash:openfl
 
---macro keep("IntIterator")
---macro keep("Main")
+# Defines
+-D HXCPP_ARM64
+-D ios
+-D mobile
 
 -D MODS_ALLOWED
 -D LUA_ALLOWED
@@ -23,9 +31,6 @@
 -D PSYCH_WATERMARKS
 -D BASE_GAME_FILES
 
--D HXCPP_ARM64
--D ios
--D mobile
-
+# Macros
 --macro lime._internal.macros.DefineMacro.run()
 --macro openfl.utils._internal.ExtraParamsMacro.include()
