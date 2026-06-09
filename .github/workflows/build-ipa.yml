@@ -39,17 +39,17 @@ jobs:
           haxelib set flixel 6.1.2
           haxelib set hxcpp 4.3.2
 
-      - name: Verify repo structure
+      - name: Verify structure
         run: |
           ls -R
 
-      - name: Build iOS
+      - name: Build iOS (CORRECT WAY)
         run: |
-          export PATH="/opt/homebrew/bin:$PATH"
+          cd PSliceEngine
 
-          lime build ios -release
+          haxelib run lime build ios -release
 
-      - name: Find .app
+      - name: Locate .app
         run: |
           APP=$(find "$HOME/Library/Developer/Xcode/DerivedData" -name "*.app" | head -n 1)
           echo "APP=$APP" >> $GITHUB_ENV
