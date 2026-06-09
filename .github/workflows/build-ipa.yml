@@ -16,19 +16,15 @@ jobs:
           brew update
           brew install haxe
 
-      - name: Setup haxelib
+      - name: Setup haxelib (CRITICAL FIX)
         run: |
           export HAXELIB_ROOT="$HOME/haxelib"
           mkdir -p $HAXELIB_ROOT
           haxelib setup $HAXELIB_ROOT
 
-      - name: Install dependencies (FIXED STACK)
+      - name: Install dependencies (LOCKED VERSION SET)
         run: |
           export HAXELIB_ROOT="$HOME/haxelib"
-
-          haxelib remove lime || true
-          haxelib remove openfl || true
-          haxelib remove flixel || true
 
           haxelib install lime 8.3.2 --force
           haxelib install openfl 9.5.2 --force
@@ -45,19 +41,24 @@ jobs:
           haxelib set flixel 5.6.2
           haxelib set hxcpp 4.3.2
 
-      - name: Verify installs
+      - name: DEBUG - verify flixel is visible
         run: |
+          export HAXELIB_ROOT="$HOME/haxelib"
           haxelib list
+          ls $HAXELIB_ROOT/flixel
 
-      - name: Build Haxe
+      - name: Build Haxe (FIXED CONTEXT)
         run: |
           export HAXELIB_ROOT="$HOME/haxelib"
           export HAXE_STD_PATH="/opt/homebrew/lib/haxe/std"
 
-          cd PSliceEngine/haxe
-          haxe Build.hxml -D HXCPP_ARM64
+          # THIS IS THE CRITICAL FIX:
+          export HAXE_LIB_PATH="$HAXELIB_ROOT"
 
-      - name: Build iOS app (Xcode)
+          cd PSliceEngine/haxe
+          haxe Build.hxml -D HXCPP_ARM64 -lib flixel -lib lime -lib openfl
+
+      - name: Build iOS
         run: |
           cd PSliceEngine
           xcodebuild \
@@ -69,10 +70,10 @@ jobs:
 
       - name: Package IPA
         run: |
-          APP_PATH=$(find ~/Library/Developer/Xcode/DerivedData -name "PSliceEngine.app" | head -n 1)
+          APP=$(find ~/Library/Developer/Xcode/DerivedData -name "PSliceEngine.app" | head -n 1)
 
           mkdir -p Payload
-          cp -r "$APP_PATH" Payload/
+          cp -R "$APP" Payload/
 
           zip -r PSliceEngine.ipa Payload
 
