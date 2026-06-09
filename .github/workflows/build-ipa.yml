@@ -11,14 +11,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install Haxe + tools
+      - name: Install Haxe
         run: |
           brew update
           brew install haxe
 
-          haxelib setup $HOME/haxelib
+      - name: Setup Haxelib
+        run: |
+          mkdir -p "$HOME/haxelib"
+          haxelib setup "$HOME/haxelib"
 
-      - name: Install dependencies (STABLE P-SLICE STACK)
+      - name: Install dependencies
         run: |
           export PATH="/opt/homebrew/bin:$PATH"
 
@@ -36,16 +39,16 @@ jobs:
           haxelib set flixel 6.1.2
           haxelib set hxcpp 4.3.2
 
-      - name: Verify project structure
+      - name: Verify Main.hx exists
         run: |
-          ls -R
+          ls -R PSliceEngine/source
 
-      - name: Build iOS (LIME - CORRECT WAY)
+      - name: Build iOS (FIXED COMMAND)
         run: |
           export PATH="/opt/homebrew/bin:$PATH"
           cd PSliceEngine
 
-          lime build ios -release
+          haxelib run lime build ios -release
 
       - name: Find .app
         run: |
