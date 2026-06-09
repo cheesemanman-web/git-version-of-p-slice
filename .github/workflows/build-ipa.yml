@@ -5,69 +5,79 @@ on:
 
 jobs:
   build-ios:
-    runs-on: macos-14
+    runs-on: macos-latest
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install Homebrew deps
+      - name: Install Haxe
         run: |
           brew update
           brew install haxe
-          brew install neko
 
-      - name: Setup Haxelib (FIX .haxelib ERROR)
+      - name: Setup haxelib
         run: |
           export HAXELIB_ROOT="$HOME/haxelib"
           mkdir -p $HAXELIB_ROOT
           haxelib setup $HAXELIB_ROOT
 
-      - name: Install Haxe dependencies (CRITICAL FIX for lime macro crash)
+      - name: Install dependencies (FIXED STACK)
         run: |
-          haxelib install lime 8.3.2 --quiet
-          haxelib install openfl 9.5.2 --quiet
-          haxelib install hxcpp 4.3.2 --quiet
-          haxelib install flixel 5.6.2 --quiet
-          haxelib install flixel-addons 3.3.2 --quiet
-          haxelib install tjson 1.4.0 --quiet
-          haxelib install hscript-iris 1.1.3 --quiet || true
-          haxelib install flxanimate --quiet || true
+          export HAXELIB_ROOT="$HOME/haxelib"
 
-      - name: Set correct Haxe versions
-        run: |
+          haxelib remove lime || true
+          haxelib remove openfl || true
+          haxelib remove flixel || true
+
+          haxelib install lime 8.3.2 --force
+          haxelib install openfl 9.5.2 --force
+          haxelib install flixel 5.6.2 --force
+          haxelib install flixel-addons 3.3.2 --force
+
+          haxelib install hxcpp 4.3.2 --force
+          haxelib install hscript 2.7.0 --force
+          haxelib install hscript-iris 1.1.3 --force
+          haxelib install tjson 1.4.0 --force
+
           haxelib set lime 8.3.2
           haxelib set openfl 9.5.2
+          haxelib set flixel 5.6.2
           haxelib set hxcpp 4.3.2
 
-      - name: Verify Lime macro fix
+      - name: Verify installs
         run: |
           haxelib list
-          haxe -version
 
-      - name: Build Haxe project (FIX PATH ISSUE)
+      - name: Build Haxe
         run: |
+          export HAXELIB_ROOT="$HOME/haxelib"
+          export HAXE_STD_PATH="/opt/homebrew/lib/haxe/std"
+
           cd PSliceEngine/haxe
           haxe Build.hxml -D HXCPP_ARM64
 
-      - name: Install CocoaPods (iOS build requirement)
-        run: |
-          sudo gem install cocoapods
-
-      - name: Build iOS App (.app)
+      - name: Build iOS app (Xcode)
         run: |
           cd PSliceEngine
-          haxelib run lime build ios -release
+          xcodebuild \
+            -project PSliceEngine.xcodeproj \
+            -scheme PSliceEngine \
+            -configuration Release \
+            -sdk iphoneos \
+            build
 
-      - name: Create IPA (FIXED packaging)
+      - name: Package IPA
         run: |
-          mkdir -p Payload
-          cp -r bin/ios/build/Release-iphoneos/*.app Payload/
+          APP_PATH=$(find ~/Library/Developer/Xcode/DerivedData -name "PSliceEngine.app" | head -n 1)
 
-          zip -r PSlice.ipa Payload
+          mkdir -p Payload
+          cp -r "$APP_PATH" Payload/
+
+          zip -r PSliceEngine.ipa Payload
 
       - name: Upload IPA
         uses: actions/upload-artifact@v4
         with:
-          name: P-Slice-IPA
-          path: PSlice.ipa
+          name: PSliceEngine-IPA
+          path: PSliceEngine.ipa
