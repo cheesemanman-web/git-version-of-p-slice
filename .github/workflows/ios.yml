@@ -8,27 +8,33 @@ jobs:
     runs-on: macos-latest
 
     steps:
+      # =========================
+      # Checkout
+      # =========================
       - name: Checkout
         uses: actions/checkout@v4
 
       # =========================
-      # Install Haxe properly
+      # Install Haxe
       # =========================
       - name: Install Haxe
         run: |
           brew update
           brew install haxe
 
-          # FIX: proper haxelib folder (IMPORTANT)
+      # =========================
+      # Setup Haxelib (FIXED)
+      # =========================
+      - name: Setup Haxelib
+        run: |
           export HAXELIB_PATH=$HOME/haxelib
           mkdir -p $HAXELIB_PATH
-
           haxelib setup $HAXELIB_PATH
 
       # =========================
       # Install dependencies
       # =========================
-      - name: Install Haxe libs
+      - name: Install Haxe libraries
         run: |
           export HAXELIB_PATH=$HOME/haxelib
 
@@ -41,24 +47,35 @@ jobs:
           haxelib install hscript-iris 1.1.3 --always
           haxelib install flxanimate --always
 
-      - name: Fix Lime cache (IMPORTANT for DefineMacro error)
+      # =========================
+      # IMPORTANT: fix Lime macros
+      # =========================
+      - name: Activate & fix Lime/OpenFL
         run: |
+          export HAXELIB_PATH=$HOME/haxelib
+
+          haxelib set lime 8.3.2
+          haxelib set openfl 9.5.2
+          haxelib set hxcpp 4.3.2
+
           haxelib run lime setup
+          haxelib run lime rebuild hxcpp
 
       # =========================
-      # Show debug info
+      # Debug versions
       # =========================
-      - name: Versions
+      - name: Show versions
         run: |
           haxe -version
           haxelib list
 
       # =========================
-      # Compile Haxe (FIX PATH!)
+      # Compile Haxe (FIXED PATH)
       # =========================
       - name: Compile Haxe
         run: |
           export HAXELIB_PATH=$HOME/haxelib
+          export HAXE_STD_PATH=/opt/homebrew/lib/haxe/std
 
           cd PSliceEngine/haxe
           haxe Build.hxml -D HXCPP_ARM64
@@ -66,7 +83,7 @@ jobs:
       # =========================
       # Build Xcode project
       # =========================
-      - name: Build Xcode
+      - name: Build Xcode app
         run: |
           xcodebuild \
             -project PSliceEngine.xcodeproj \
@@ -84,17 +101,17 @@ jobs:
       # =========================
       - name: Create IPA
         run: |
-          APP=$(find ~/Library/Developer/Xcode/DerivedData -name "PSliceEngine.app" | head -n 1)
+          APP_PATH=$(find ~/Library/Developer/Xcode/DerivedData -name "PSliceEngine.app" | head -n 1)
 
-          echo "Found app: $APP"
+          echo "Found app: $APP_PATH"
 
           mkdir -p Payload
-          cp -R "$APP" Payload/
+          cp -R "$APP_PATH" Payload/
 
           zip -r PSliceEngine.ipa Payload
 
       # =========================
-      # Upload result
+      # Upload artifact
       # =========================
       - name: Upload IPA
         uses: actions/upload-artifact@v4
