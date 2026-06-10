@@ -1,120 +1,66 @@
-```yaml
-name: Build IPA (P-Slice)
+name: iOS IPA Build (P-Slice)
 
 on:
   workflow_dispatch:
+  push:
+    branches: [ main ]
 
 jobs:
   build-ios:
     runs-on: macos-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install Homebrew dependencies
+      - name: Install Haxe
+        uses: krdlab/setup-haxe@v1
+        with:
+          haxe-version: 4.3.6
+
+      - name: Install Haxelib dependencies
         run: |
-          brew update
-          brew install haxe
+          haxelib setup ~/haxelib
+          haxelib install lime
+          haxelib install openfl
+          haxelib install flixel
+          haxelib install flixel-addons
+          haxelib install hxcpp
+          haxelib install tjson
+          haxelib install hscript
+          haxelib install hscript-iris
+          haxelib install lime-tools
+          haxelib run lime setup
 
-      - name: Setup haxelib
+      - name: Verify project structure
         run: |
-          mkdir -p "$HOME/haxelib"
-          haxelib setup "$HOME/haxelib"
+          ls -R
 
-      - name: Install Haxe libraries
+      - name: Build iOS project (no signing IPA build)
         run: |
-          set -e
+          cd PSliceEngine
+          haxelib run lime build ios -DNO_CODE_SIGN
 
-          haxelib install hxcpp 4.3.2 --quiet
-          haxelib install lime 8.3.2 --quiet
-          haxelib install openfl 9.5.2 --quiet
-          haxelib install flixel 5.6.2 --quiet
-          haxelib install flixel-addons 3.3.2 --quiet
-          haxelib install hscript 2.7.0 --quiet
-          haxelib install hscript-iris 1.1.3 --quiet
-          haxelib install tjson 1.4.0 --quiet
-
-          haxelib set hxcpp 4.3.2
-          haxelib set lime 8.3.2
-          haxelib set openfl 9.5.2
-          haxelib set flixel 5.6.2
-          haxelib set flixel-addons 3.3.2
-          haxelib set hscript 2.7.0
-          haxelib set hscript-iris 1.1.3
-          haxelib set tjson 1.4.0
-          haxelib list
-
-      - name: Verify environment
+      - name: Fix Xcode signing (force disable)
         run: |
-          echo "===== HAXE ====="
-          haxe --version
-
-          echo "===== HAXELIB CONFIG ====="
-          haxelib config
-
-          echo "===== HAXELIB LIST ====="
-          haxelib list
-
-          echo "===== OPENFL ====="
-          haxelib path openfl
-
-          echo "===== LIME ====="
-          haxelib path lime
-
-          echo "===== FLIXEL ====="
-          haxelib path flixel
-
-      - name: Locate Xcode project
-        id: project
-        run: |
-          PROJ=$(find . -name "*.xcodeproj" | head -n 1)
-
-          if [ -z "$PROJ" ]; then
-            echo "No .xcodeproj found!"
-            exit 1
-          fi
-
-          echo "Found: $PROJ"
-          echo "proj=$PROJ" >> "$GITHUB_OUTPUT"
-
-      - name: Build iOS
-        run: |
-          set -e
-
-          cd "$(dirname "${{ steps.project.outputs.proj }}")"
-
-          xcodebuild \
-            -project "$(basename "${{ steps.project.outputs.proj }}")" \
+          cd PSliceEngine/bin/ios
+          xcodebuild -project PSliceEngine.xcodeproj \
             -scheme PSliceEngine \
             -configuration Release \
-            -sdk iphoneos \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY="" \
-            clean build
+            build
 
-      - name: Locate app bundle
+      - name: Archive IPA (unsigned)
         run: |
-          APP=$(find ~/Library/Developer/Xcode/DerivedData -name "*.app" | head -n 1)
-
-          if [ -z "$APP" ]; then
-            echo "No .app produced."
-            exit 1
-          fi
-
-          echo "APP_PATH=$APP" >> "$GITHUB_ENV"
-
-      - name: Create IPA
-        run: |
-          rm -rf Payload
-          mkdir Payload
-          cp -R "$APP_PATH" Payload/
-          zip -qry PSliceEngine.ipa Payload
+          cd PSliceEngine/bin/ios
+          mkdir -p Payload
+          cp -r Release-iphoneos/PSliceEngine.app Payload/
+          zip -r PSliceEngine.ipa Payload
 
       - name: Upload IPA
         uses: actions/upload-artifact@v4
         with:
           name: PSliceEngine-IPA
-          path: PSliceEngine.ipa
-```
+          path: PSliceEngine/bin/ios/PSliceEngine.ipa
