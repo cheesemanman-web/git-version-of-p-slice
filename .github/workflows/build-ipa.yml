@@ -1,87 +1,84 @@
-name: P-Slice iOS Build (No Signing)
+name: Build P-Slice iOS (Simulator No Signing)
 
 on:
   workflow_dispatch:
+  push:
 
 jobs:
-  ios-build:
+  build-ios:
     runs-on: macos-latest
 
-    env:
-      HAXELIB_ROOT: ${{ github.workspace }}/.haxelib
-      CODE_SIGNING_ALLOWED: NO
-      CODE_SIGNING_REQUIRED: NO
-      CODE_SIGNING_IDENTITY: ""
-
     steps:
-      - name: Checkout repo
+      - name: Checkout
         uses: actions/checkout@v4
 
       # =========================
-      # Setup Haxe properly
+      # INSTALL HAXE (FIX ARM64 ISSUE)
       # =========================
-      - name: Install Haxe + setup haxelib
+      - name: Install Haxe + dependencies
         run: |
-          brew install haxe
-          mkdir -p $HAXELIB_ROOT
-          haxelib setup $HAXELIB_ROOT
+          brew update
+          brew install haxe neko
+
+          mkdir -p $GITHUB_WORKSPACE/.haxelib
+          echo "HAXELIB_ROOT=$GITHUB_WORKSPACE/.haxelib" >> $GITHUB_ENV
+          echo "HAXE_STD_PATH=$(brew --prefix haxe)/lib/haxe/std" >> $GITHUB_ENV
+
+          haxelib setup $GITHUB_WORKSPACE/.haxelib
 
       # =========================
-      # Install dependencies
+      # INSTALL LIBS
       # =========================
-      - name: Install Haxe libs
+      - name: Install haxelib deps
         run: |
-          haxelib install lime 8.3.2 --quiet
-          haxelib install openfl --quiet
-          haxelib install flixel --quiet
-          haxelib install flixel-addons 3.2.2 --quiet || true
-          haxelib install hxcpp --quiet
-          haxelib install tjson --quiet
-          haxelib install hscript-iris --quiet
+          haxelib install lime
+          haxelib install openfl
+          haxelib install flixel
+          haxelib install flixel-addons
+          haxelib install hxcpp
+          haxelib install hscript
+          haxelib install hscript-iris
+          haxelib install tjson
 
       # =========================
-      # Build iOS project
+      # FORCE PROJECT ROOT
       # =========================
-      - name: Build iOS (Lime)
+      - name: Verify project
         run: |
-          cd $GITHUB_WORKSPACE
-          haxelib run lime build ios -verbose
+          ls -R
+          test -f project.xml
 
       # =========================
-      # HARD DISABLE XCODE SIGNING (IMPORTANT)
+      # DISABLE XCODE SIGNING (IMPORTANT)
       # =========================
-      - name: Disable Xcode signing
+      - name: Configure Xcode (NO SIGNING)
         run: |
-          PROJ="bin/ios/PSliceEngine.xcodeproj/project.pbxproj"
+          echo "Disabling code signing for CI build..."
 
-          if [ -f "$PROJ" ]; then
-            echo "Patching signing settings..."
-
-            # remove team requirement
-            sed -i '' 's/DEVELOPMENT_TEAM = .*;//g' "$PROJ" || true
-
-            # remove provisioning profiles
-            sed -i '' 's/PROVISIONING_PROFILE_SPECIFIER = .*;//g' "$PROJ" || true
-
-            # disable code signing flags
-            sed -i '' 's/CODE_SIGN_STYLE = .*;/CODE_SIGN_STYLE = Manual;/g' "$PROJ" || true
-
-            echo "Signing disabled"
-          fi
+          defaults write com.apple.dt.Xcode IDEPackageOnlyUseVersionsFromResolvedFile -bool YES
 
       # =========================
-      # Rebuild after patch
+      # BUILD IOS SIMULATOR (NO SIGNING)
       # =========================
-      - name: Rebuild iOS (patched)
+      - name: Build iOS Simulator
         run: |
-          cd $GITHUB_WORKSPACE
-          haxelib run lime build ios -verbose
+          export DEVELOPER_DIR="/Applications/Xcode.app/Contents/Developer"
+
+          haxelib run lime build ios -simulator -verbose \
+            -D simulator \
+            -D NO_CODE_SIGNING \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            PROVISIONING_PROFILE_SPECIFIER=""
 
       # =========================
-      # Upload build output
+      # PACKAGE OUTPUT
       # =========================
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ios-build
-          path: bin/ios
+          name: pslice-ios-simulator-build
+          path: |
+            export/release/ios/bin
+            bin/ios
