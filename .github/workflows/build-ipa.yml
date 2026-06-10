@@ -1,4 +1,4 @@
-name: P-Slice iOS Build (No Signing)
+name: Build P-Slice iOS (Unsigned IPA)
 
 on:
   workflow_dispatch:
@@ -8,39 +8,58 @@ jobs:
     runs-on: macos-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Install Haxe
+      - name: Setup Haxe (fixed arm64-safe)
         run: |
-          brew update
           brew install haxe
-          haxelib setup ~/haxelib
+          haxe -version
 
-      - name: Install libs
+      - name: Install Haxelib deps
         run: |
+          haxelib setup ~/haxelib
           haxelib install lime
           haxelib install openfl
           haxelib install flixel
-          haxelib install flixel-addons 3.3.2
+          haxelib install flixel-addons
           haxelib install hxcpp
-          haxelib install tjson
           haxelib install hscript
           haxelib install hscript-iris
+          haxelib install tjson
+          haxelib run lime setup
 
-      - name: Build iOS (generate Xcode project)
+      - name: Fix project signing (IMPORTANT STEP)
         run: |
-          haxelib run lime build ios
+          cd PSliceEngine/bin/ios || true
+          find . -name "*.xcodeproj" -print
 
-      - name: Disable code signing (IMPORTANT)
+          # Force disable signing in all configs
+          if [ -d "PSliceEngine.xcodeproj" ]; then
+            echo "Fixing Xcode signing settings..."
+
+            defaults write "$(pwd)/project.pbxproj" CODE_SIGNING_REQUIRED -bool NO || true
+            defaults write "$(pwd)/project.pbxproj" CODE_SIGNING_ALLOWED -bool NO || true
+          fi
+
+      - name: Build iOS (NO signing)
         run: |
-          PROJ="bin/ios/PSliceEngine.xcodeproj/project.pbxproj"
+          cd PSliceEngine
 
-          sed -i '' 's/DEVELOPMENT_TEAM = .*;/DEVELOPMENT_TEAM = "";/g' $PROJ || true
-          sed -i '' 's/CODE_SIGNING_REQUIRED = YES;/CODE_SIGNING_REQUIRED = NO;/g' $PROJ || true
-          sed -i '' 's/CODE_SIGNING_ALLOWED = YES;/CODE_SIGNING_ALLOWED = NO;/g' $PROJ || true
+          haxelib run lime build ios -final -verbose \
+            -D CODE_SIGNING_REQUIRED=NO \
+            -D CODE_SIGNING_ALLOWED=NO \
+            -D AD_HOC_CODE_SIGNING_ALLOWED=NO
 
-      - name: Upload iOS build
+      - name: Package IPA
+        run: |
+          cd PSliceEngine/bin/ios/Release-iphoneos || true
+          mkdir Payload || true
+          cp -r *.app Payload/ || true
+          zip -r PSlice.ipa Payload
+
+      - name: Upload IPA
         uses: actions/upload-artifact@v4
         with:
-          name: ios-export
-          path: bin/ios
+          name: PSlice-Unsigned-IPA
+          path: PSliceEngine/bin/ios/Release-iphoneos/PSlice.ipa
