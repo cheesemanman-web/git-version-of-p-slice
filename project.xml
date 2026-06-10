@@ -4,9 +4,6 @@
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://lime.openfl.org/project/1.0.4 http://lime.openfl.org/xsd/project-1.0.4.xsd">
 
-    <!-- =========================
-         APP INFO
-    ========================== -->
     <app
         title="Friday Night Funkin': P-Slice Engine"
         file="PSliceEngine"
@@ -17,9 +14,6 @@
 
     <meta build-number="342" />
 
-    <!-- =========================
-         WINDOW
-    ========================== -->
     <window
         width="1280"
         height="720"
@@ -29,60 +23,39 @@
         vsync="false"
         allow-high-dpi="true" />
 
-    <!-- =========================
-         SOURCE
-    ========================== -->
-    <classpath name="source" />
+    <!-- FIXED: Main.hx is in PSliceEngine/source -->
+    <classpath name="PSliceEngine/source" />
 
-    <!-- =========================
-         ASSETS
-    ========================== -->
-    <assets path="assets/fonts"/>
-    <assets path="assets/shared"/>
-    <assets path="assets/week_assets" rename="assets"/>
-    <assets path="example_mods" rename="mods" embed="false"/>
-    <assets path="assets/videos" embed="false"/>
+    <!-- Assets -->
+    <assets path="PSliceEngine/assets/fonts" />
+    <assets path="PSliceEngine/assets/shared" />
+    <assets path="PSliceEngine/assets/week_assets" rename="assets" />
+    <assets path="PSliceEngine/example_mods" rename="mods" embed="false" />
+    <assets path="PSliceEngine/assets/videos" embed="false" />
 
-    <!-- =========================
-         LIBRARIES
-    ========================== -->
-    <haxelib name="lime"/>
-    <haxelib name="openfl"/>
-    <haxelib name="flixel"/>
-    <haxelib name="flixel-addons"/>
-    <haxelib name="hxcpp"/>
-    <haxelib name="tjson"/>
-    <haxelib name="hscript-iris"/>
+    <!-- Haxelib dependencies -->
+    <haxelib name="lime" />
+    <haxelib name="openfl" />
+    <haxelib name="flixel" />
+    <haxelib name="flixel-addons" />
+    <haxelib name="hxcpp" />
+    <haxelib name="tjson" />
+    <haxelib name="hscript-iris" />
 
-    <!-- =========================
-         GLOBAL DEFINES
-    ========================== -->
-    <define name="MODS_ALLOWED"/>
-    <define name="HSCRIPT_ALLOWED"/>
-    <define name="BASE_GAME_FILES"/>
-    <define name="PSYCH_WATERMARKS"/>
+    <!-- Engine defines -->
+    <define name="MODS_ALLOWED" />
+    <define name="HSCRIPT_ALLOWED" />
+    <define name="BASE_GAME_FILES" />
+    <define name="PSYCH_WATERMARKS" />
+    <define name="LUA_ALLOWED" />
 
-    <!-- 🚨 CRITICAL IOS FIX: DISABLE SIGNING -->
-    <define name="CODE_SIGNING_REQUIRED" value="NO"/>
-    <define name="CODE_SIGNING_ALLOWED" value="NO"/>
-    <define name="CODE_SIGN_IDENTITY" value=""/>
-    <define name="PROVISIONING_PROFILE_SPECIFIER" value=""/>
-
-    <!-- =========================
-         IOS TARGET OVERRIDE
-    ========================== -->
+    <!-- iOS -->
     <section if="ios">
-        <haxedef name="HXCPP_ARM64"/>
-
-        <!-- extra safety for Xcode -->
-        <define name="CODE_SIGNING_ALLOWED" value="NO"/>
-        <define name="CODE_SIGNING_REQUIRED" value="NO"/>
+        <haxedef name="HXCPP_ARM64" />
     </section>
 
-    <!-- =========================
-         OPTIMIZATION / SAFETY
-    ========================== -->
-    <haxedef name="FLX_NO_FOCUS_LOST_SCREEN"/>
-    <haxedef name="lime_disable_assets_version"/>
+    <!-- Optional -->
+    <haxedef name="FLX_NO_FOCUS_LOST_SCREEN" />
+    <haxedef name="lime_disable_assets_version" />
 
 </project>
