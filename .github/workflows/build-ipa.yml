@@ -1,32 +1,34 @@
-name: iOS Build (P-Slice)
+name: P-Slice iOS Build (No Signing)
 
 on:
   workflow_dispatch:
 
 jobs:
-  build-ios:
+  ios-build:
     runs-on: macos-latest
 
     env:
       HAXELIB_ROOT: ${{ github.workspace }}/.haxelib
-      HOMEBREW_NO_AUTO_UPDATE: 1
+      CODE_SIGNING_ALLOWED: NO
+      CODE_SIGNING_REQUIRED: NO
+      CODE_SIGNING_IDENTITY: ""
 
     steps:
-      - name: Checkout
+      - name: Checkout repo
         uses: actions/checkout@v4
 
-      # ========================
-      # FIX HAXELIB (CRITICAL)
-      # ========================
-      - name: Setup Haxe (manual safe install)
+      # =========================
+      # Setup Haxe properly
+      # =========================
+      - name: Install Haxe + setup haxelib
         run: |
           brew install haxe
           mkdir -p $HAXELIB_ROOT
           haxelib setup $HAXELIB_ROOT
 
-      # ========================
-      # INSTALL LIBS (FIXES YOUR ERROR)
-      # ========================
+      # =========================
+      # Install dependencies
+      # =========================
       - name: Install Haxe libs
         run: |
           haxelib install lime 8.3.2 --quiet
@@ -37,53 +39,49 @@ jobs:
           haxelib install tjson --quiet
           haxelib install hscript-iris --quiet
 
-      # ========================
-      # VERIFY PROJECT LOCATION FIX
-      # ========================
-      - name: Verify project.xml
-        run: |
-          echo "Root files:"
-          ls -la
-          test -f project.xml || (echo "project.xml missing in root" && exit 1)
-
-      # ========================
-      # BUILD IOS (LIME)
-      # ========================
-      - name: Build iOS (no signing fix)
+      # =========================
+      # Build iOS project
+      # =========================
+      - name: Build iOS (Lime)
         run: |
           cd $GITHUB_WORKSPACE
-
-          # CRITICAL: disables Xcode signing requirement
-          export FASTSIM=true
-
           haxelib run lime build ios -verbose
 
-      # ========================
-      # FIX SIGNING ERROR (REAL FIX)
-      # ========================
-      - name: Patch Xcode signing (CI bypass)
+      # =========================
+      # HARD DISABLE XCODE SIGNING (IMPORTANT)
+      # =========================
+      - name: Disable Xcode signing
         run: |
           PROJ="bin/ios/PSliceEngine.xcodeproj/project.pbxproj"
 
           if [ -f "$PROJ" ]; then
-            sed -i '' 's/DEVELOPMENT_TEAM = .*;/DEVELOPMENT_TEAM = "";/g' $PROJ || true
-            sed -i '' 's/ProvisioningStyle = Automatic;/ProvisioningStyle = Manual;/g' $PROJ || true
-            echo "Signing patched"
+            echo "Patching signing settings..."
+
+            # remove team requirement
+            sed -i '' 's/DEVELOPMENT_TEAM = .*;//g' "$PROJ" || true
+
+            # remove provisioning profiles
+            sed -i '' 's/PROVISIONING_PROFILE_SPECIFIER = .*;//g' "$PROJ" || true
+
+            # disable code signing flags
+            sed -i '' 's/CODE_SIGN_STYLE = .*;/CODE_SIGN_STYLE = Manual;/g' "$PROJ" || true
+
+            echo "Signing disabled"
           fi
 
-      # ========================
-      # REBUILD AFTER PATCH
-      # ========================
-      - name: Rebuild after signing patch
+      # =========================
+      # Rebuild after patch
+      # =========================
+      - name: Rebuild iOS (patched)
         run: |
+          cd $GITHUB_WORKSPACE
           haxelib run lime build ios -verbose
 
-      # ========================
-      # ARTIFACT OUTPUT
-      # ========================
-      - name: Upload build output
+      # =========================
+      # Upload build output
+      # =========================
+      - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
           name: ios-build
-          path: |
-            bin/ios
+          path: bin/ios
