@@ -1,22 +1,22 @@
-name: Build P-Slice iOS (Unsigned IPA)
+name: Build P-Slice iOS IPA
 
 on:
   workflow_dispatch:
 
 jobs:
-  build-ios:
+  ios:
     runs-on: macos-latest
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Haxe (fixed arm64-safe)
+      - name: Install Haxe (safe method)
         run: |
           brew install haxe
           haxe -version
 
-      - name: Install Haxelib deps
+      - name: Setup Haxelib
         run: |
           haxelib setup ~/haxelib
           haxelib install lime
@@ -29,37 +29,25 @@ jobs:
           haxelib install tjson
           haxelib run lime setup
 
-      - name: Fix project signing (IMPORTANT STEP)
+      - name: Show project location (debug)
         run: |
-          cd PSliceEngine/bin/ios || true
-          find . -name "*.xcodeproj" -print
+          ls -R
 
-          # Force disable signing in all configs
-          if [ -d "PSliceEngine.xcodeproj" ]; then
-            echo "Fixing Xcode signing settings..."
-
-            defaults write "$(pwd)/project.pbxproj" CODE_SIGNING_REQUIRED -bool NO || true
-            defaults write "$(pwd)/project.pbxproj" CODE_SIGNING_ALLOWED -bool NO || true
-          fi
-
-      - name: Build iOS (NO signing)
+      - name: Build iOS (ROOT FIX)
         run: |
-          cd PSliceEngine
-
-          haxelib run lime build ios -final -verbose \
+          haxelib run lime build ios -verbose \
             -D CODE_SIGNING_REQUIRED=NO \
-            -D CODE_SIGNING_ALLOWED=NO \
-            -D AD_HOC_CODE_SIGNING_ALLOWED=NO
+            -D CODE_SIGNING_ALLOWED=NO
 
       - name: Package IPA
         run: |
-          cd PSliceEngine/bin/ios/Release-iphoneos || true
-          mkdir Payload || true
-          cp -r *.app Payload/ || true
+          cd bin/ios/Release-iphoneos || exit 0
+          mkdir -p Payload
+          cp -r *.app Payload/
           zip -r PSlice.ipa Payload
 
       - name: Upload IPA
         uses: actions/upload-artifact@v4
         with:
-          name: PSlice-Unsigned-IPA
-          path: PSliceEngine/bin/ios/Release-iphoneos/PSlice.ipa
+          name: PSlice-IPA
+          path: bin/ios/Release-iphoneos/PSlice.ipa
