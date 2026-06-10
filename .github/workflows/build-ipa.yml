@@ -7,40 +7,67 @@ jobs:
   build-ios:
     runs-on: macos-latest
 
+    env:
+      HAXELIB_ROOT: ~/haxelib
+      DERIVED_DATA: ~/Library/Developer/Xcode/DerivedData
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # =========================
+      # XCODE SETUP
+      # =========================
       - name: Select Xcode
-        run: sudo xcode-select -s /Applications/Xcode.app
+        run: sudo xcode-select -s /Applications/Xcode_16.4.app
 
+      # =========================
+      # HAXE INSTALL
+      # =========================
       - name: Install Haxe
         run: |
           brew update
           brew install haxe
-          haxelib setup ~/haxelib
+          haxelib setup $HAXELIB_ROOT
 
-      # ✅ FIX: install ALL required haxelib deps BEFORE Xcode builds
+      # =========================
+      # CACHE HAXELIB (IMPORTANT)
+      # =========================
+      - name: Cache haxelib
+        uses: actions/cache@v4
+        with:
+          path: ~/haxelib
+          key: ${{ runner.os }}-haxelib-${{ hashFiles('**/hxml', '**/haxelib.json', '**/project.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-haxelib-
+
+      # =========================
+      # INSTALL DEPENDENCIES
+      # =========================
       - name: Install Haxe dependencies
         run: |
-          haxelib install lime --quiet
-          haxelib install openfl --quiet
-          haxelib install hxcpp --quiet
-          haxelib install flixel --quiet
-          haxelib install flixel-addons --quiet
-          haxelib install flixel-ui --quiet
+          haxelib install lime --always
+          haxelib install openfl --always
+          haxelib install hxcpp --always
+          haxelib install flixel --always
+          haxelib install flixel-addons --always
+          haxelib install hscript --always
+          haxelib install hscript-iris --always
+          haxelib install tjson --always
 
-      - name: Install HMM (optional but safer)
+      # =========================
+      # OPTIONAL HMM
+      # =========================
+      - name: Install HMM (optional)
         run: |
-          haxelib install hmm --quiet || true
-          haxelib run hmm install || true
+          haxelib install hmm --always || true
+          if [ -f hmm.json ]; then
+            haxelib run hmm install
+          fi
 
-      - name: Export PATH
-        run: echo "/opt/homebrew/bin" >> $GITHUB_PATH
-
-      - name: Debug files
-        run: ls -la
-
+      # =========================
+      # BUILD XCODE
+      # =========================
       - name: Build Xcode project
         run: |
           set -o pipefail
@@ -54,17 +81,31 @@ jobs:
             CODE_SIGNING_REQUIRED=NO \
             clean build
 
-      - name: Find .app
+      # =========================
+      # FIND APP (ROBUST)
+      # =========================
+      - name: Locate .app
         run: |
-          APP=$(find ~/Library/Developer/Xcode/DerivedData -name "*.app" | head -n 1)
+          APP=$(find "$DERIVED_DATA" -type d -name "*.app" | grep "Release-iphoneos" | head -n 1)
           echo "APP=$APP" >> $GITHUB_ENV
+          echo "Found app: $APP"
 
+      # =========================
+      # CREATE PROPER IPA
+      # =========================
       - name: Create IPA
         run: |
+          set -e
+
           mkdir -p Payload
           cp -R "$APP" Payload/
-          zip -r PSliceEngine.ipa Payload
 
+          rm -f PSliceEngine.ipa
+          ditto -c -k --sequesterRsrc --keepParent Payload PSliceEngine.ipa
+
+      # =========================
+      # UPLOAD ARTIFACT
+      # =========================
       - name: Upload IPA
         uses: actions/upload-artifact@v4
         with:
