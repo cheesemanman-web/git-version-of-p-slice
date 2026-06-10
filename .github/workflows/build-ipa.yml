@@ -1,4 +1,4 @@
-name: Build iOS IPA (P-Slice ARM64)
+ name: Build iOS IPA (P-Slice)
 
 on:
   workflow_dispatch:
@@ -7,28 +7,23 @@ on:
 
 jobs:
   build-ios:
-    runs-on: macos-latest   # ✅ fast queue ARM64 runner
+    runs-on: macos-latest
 
     steps:
-      - name: Checkout
+      - name: Checkout repo
         uses: actions/checkout@v4
 
       # =========================
-      # FIX: Install Haxe manually (ARM64 compatible)
+      # Install Haxe (ARM64 safe)
       # =========================
-      - name: Install Haxe + tools
+      - name: Install Haxe
         run: |
           brew update
-
-          # Install Haxe (ARM64 native)
           brew install haxe
-
-          # Setup haxelib
-          mkdir -p ~/haxelib
           haxelib setup ~/haxelib
 
       # =========================
-      # Install dependencies
+      # Install libraries
       # =========================
       - name: Install Haxe libs
         run: |
@@ -43,16 +38,9 @@ jobs:
           haxelib run lime setup
 
       # =========================
-      # Fix iOS SDK environment
-      # =========================
-      - name: Setup iOS toolchain
-        run: |
-          sudo xcode-select -s /Applications/Xcode.app
-
-      # =========================
-      # Build IPA (or iOS project)
+      # Build from ROOT (IMPORTANT FIX)
       # =========================
       - name: Build iOS
         run: |
-          cd PSliceEngine
-          haxelib run lime build ios -release
+          ls
+          haxelib run lime build project.xml ios -release
