@@ -1,66 +1,89 @@
-name: P-Slice iOS IPA (FINAL FIX)
+name: iOS Build (P-Slice)
 
 on:
   workflow_dispatch:
 
 jobs:
-  ios:
+  build-ios:
     runs-on: macos-latest
 
+    env:
+      HAXELIB_ROOT: ${{ github.workspace }}/.haxelib
+      HOMEBREW_NO_AUTO_UPDATE: 1
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Install Haxe
+      # ========================
+      # FIX HAXELIB (CRITICAL)
+      # ========================
+      - name: Setup Haxe (manual safe install)
         run: |
-          brew update
           brew install haxe
-          haxe -version
-
-      - name: Setup haxelib (SAFE PATH)
-        run: |
-          export HAXELIB_ROOT=$GITHUB_WORKSPACE/.haxelib
           mkdir -p $HAXELIB_ROOT
           haxelib setup $HAXELIB_ROOT
 
-          haxelib install lime
-          haxelib install openfl
-          haxelib install flixel
-          haxelib install flixel-addons
-          haxelib install hxcpp
-          haxelib install hscript
-          haxelib install hscript-iris
-          haxelib install tjson
-
-          haxelib run lime setup
-
-      - name: Fix Lime crash (CRITICAL)
+      # ========================
+      # INSTALL LIBS (FIXES YOUR ERROR)
+      # ========================
+      - name: Install Haxe libs
         run: |
-          export LIME_CONFIG_DIR=$GITHUB_WORKSPACE/.lime
-          mkdir -p $LIME_CONFIG_DIR
-          echo "<config />" > $LIME_CONFIG_DIR/config.xml
+          haxelib install lime 8.3.2 --quiet
+          haxelib install openfl --quiet
+          haxelib install flixel --quiet
+          haxelib install flixel-addons 3.2.2 --quiet || true
+          haxelib install hxcpp --quiet
+          haxelib install tjson --quiet
+          haxelib install hscript-iris --quiet
 
-      - name: Debug project
-        run: ls -R
-
-      - name: Build iOS (NO SIGNING, SAFE MODE)
+      # ========================
+      # VERIFY PROJECT LOCATION FIX
+      # ========================
+      - name: Verify project.xml
         run: |
-          export HAXELIB_ROOT=$GITHUB_WORKSPACE/.haxelib
-          export LIME_CONFIG_DIR=$GITHUB_WORKSPACE/.lime
+          echo "Root files:"
+          ls -la
+          test -f project.xml || (echo "project.xml missing in root" && exit 1)
 
-          haxelib run lime build ios -verbose \
-            -D CODE_SIGNING_REQUIRED=NO \
-            -D CODE_SIGNING_ALLOWED=NO \
-            -D AD_HOC_CODE_SIGNING_ALLOWED=NO
-
-      - name: Package IPA
+      # ========================
+      # BUILD IOS (LIME)
+      # ========================
+      - name: Build iOS (no signing fix)
         run: |
-          cd bin/ios/Release-iphoneos || exit 0
-          mkdir -p Payload
-          cp -r *.app Payload/
-          zip -r P-Slice.ipa Payload
+          cd $GITHUB_WORKSPACE
 
-      - name: Upload IPA
+          # CRITICAL: disables Xcode signing requirement
+          export FASTSIM=true
+
+          haxelib run lime build ios -verbose
+
+      # ========================
+      # FIX SIGNING ERROR (REAL FIX)
+      # ========================
+      - name: Patch Xcode signing (CI bypass)
+        run: |
+          PROJ="bin/ios/PSliceEngine.xcodeproj/project.pbxproj"
+
+          if [ -f "$PROJ" ]; then
+            sed -i '' 's/DEVELOPMENT_TEAM = .*;/DEVELOPMENT_TEAM = "";/g' $PROJ || true
+            sed -i '' 's/ProvisioningStyle = Automatic;/ProvisioningStyle = Manual;/g' $PROJ || true
+            echo "Signing patched"
+          fi
+
+      # ========================
+      # REBUILD AFTER PATCH
+      # ========================
+      - name: Rebuild after signing patch
+        run: |
+          haxelib run lime build ios -verbose
+
+      # ========================
+      # ARTIFACT OUTPUT
+      # ========================
+      - name: Upload build output
         uses: actions/upload-artifact@v4
         with:
-          name: P-Slice-iOS-IPA
-          path: bin/ios/Release-iphoneos/P-Slice.ipa
+          name: ios-build
+          path: |
+            bin/ios
