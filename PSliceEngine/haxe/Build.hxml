@@ -1,10 +1,13 @@
-# ============ ENTRY POINT ============
+# ENTRY
 -main Main
 
-# ============ SOURCE PATHS ============
+# SOURCE
 -cp source
+-cp source/psychlua
+-cp source/mikolka
+-cp source/states
 
-# ============ LIBS ============
+# LIBS
 -lib lime
 -lib openfl
 -lib flixel
@@ -14,19 +17,19 @@
 -lib hscript-iris
 -lib tjson
 
-# ============ DEFINES ============
--D MODS_ALLOWED
--D HSCRIPT_ALLOWED
--D PSYCH_WATERMARKS
--D BASE_GAME_FILES
-
-# Lua in P-Slice is internal (DO NOT use llua/linc installs)
--D LUA_ALLOWED
-
-# ============ PLATFORM ============
+# DEFINES
 -D ios
 -D HXCPP_ARM64
-# ============ OPENFL/LIME MACROS ============
+-D MODS_ALLOWED
+-D HSCRIPT_ALLOWED
+-D BASE_GAME_FILES
+-D LUA_ALLOWED=1
+
+# IMPORTANT iOS FIXES
+-D no-file-system
+-D openfl-disable-stdio
+
+# MACROS
 --macro keep("Main")
 --macro flixel.system.macros.FlxDefines.run()
 --macro lime._internal.macros.DefineMacro.run()
