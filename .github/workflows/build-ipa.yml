@@ -20,13 +20,12 @@ jobs:
           brew install haxe
           haxelib setup ~/haxelib
           haxelib install hxcpp --quiet
-          haxelib install lime --quiet
-          haxelib install openfl --quiet
 
-      - name: Debug workspace
-        run: |
-          echo "WORKSPACE: $GITHUB_WORKSPACE"
-          ls -la "$GITHUB_WORKSPACE"
+      - name: Export PATH
+        run: echo "/opt/homebrew/bin" >> $GITHUB_PATH
+
+      - name: Debug files
+        run: ls -la
 
       - name: Build Xcode project
         run: |
@@ -44,7 +43,6 @@ jobs:
       - name: Find .app
         run: |
           APP=$(find ~/Library/Developer/Xcode/DerivedData -name "*.app" | head -n 1)
-          echo "APP=$APP"
           echo "APP=$APP" >> $GITHUB_ENV
 
       - name: Create IPA
