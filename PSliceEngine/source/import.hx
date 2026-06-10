@@ -9,8 +9,8 @@ import backend.Discord;
 
 //Psych
 #if LUA_ALLOWED
-import llua.*;
-import llua.Lua;
+// P-Slice uses internal Lua (linc_luajit-mobile)
+// No llua / psychlua dependency here
 #end
 
 #if ACHIEVEMENTS_ALLOWED
