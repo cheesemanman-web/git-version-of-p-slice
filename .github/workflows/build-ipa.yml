@@ -1,58 +1,60 @@
-name: Build iOS IPA (P-Slice)
+name: iOS Build (Unsigned IPA)
 
 on:
   workflow_dispatch:
-  push:
-    branches: [ main ]
 
 jobs:
   build-ios:
-    runs-on: macos-latest
+    runs-on: macos-13
 
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      # =========================
-      # Debug: confirm project.xml exists
-      # =========================
-      - name: Check repo structure
-        run: |
-          pwd
-          ls -R
+      - name: Setup Haxe
+        uses: krdlab/setup-haxe@v1
+        with:
+          haxe-version: 4.3.6
 
-      # =========================
-      # Install Haxe (ARM64 safe)
-      # =========================
-      - name: Install Haxe
+      - name: Install Haxelib dependencies
         run: |
-          brew update
-          brew install haxe
           haxelib setup ~/haxelib
-
-      # =========================
-      # Install dependencies
-      # =========================
-      - name: Install Haxe libs
-        run: |
           haxelib install lime
           haxelib install openfl
           haxelib install flixel
           haxelib install flixel-addons
           haxelib install hxcpp
-          haxelib install hscript
-          haxelib install hscript-iris
           haxelib install tjson
-          haxelib run lime setup
+          haxelib install hscript-iris
+          haxelib list
 
-      # =========================
-      # FIXED BUILD (explicit path)
-      # =========================
-      - name: Build iOS
+      - name: Install project dependencies (if hxml exists)
         run: |
-          if [ ! -f "project.xml" ]; then
-            echo "ERROR: project.xml NOT FOUND in root"
-            exit 1
+          if [ -f "PSliceEngine/haxe/Build.hxml" ]; then
+            echo "Found Build.hxml"
           fi
 
-          haxelib run lime build project.xml ios -release
+      - name: Build iOS (NO SIGNING FIX)
+        run: |
+          cd PSliceEngine || exit 1
+
+          lime build ios -release \
+            -D ios \
+            -D NO_CODE_SIGN \
+            -D CODE_SIGNING_ALLOWED=0 \
+            -D CODE_SIGNING_REQUIRED=0
+
+      - name: Patch Xcode signing (extra safety)
+        run: |
+          PROJ="bin/ios/PSliceEngine.xcodeproj"
+
+          if [ -d "$PROJ" ]; then
+            echo "Disabling code signing in project"
+            /usr/libexec/PlistBuddy -c "Set :objects:CODE_SIGN_IDENTITY ''" "$PROJ/project.pbxproj" || true
+          fi
+
+      - name: Archive artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-build
+          path: PSliceEngine/bin/ios
