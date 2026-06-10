@@ -4,6 +4,7 @@
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://lime.openfl.org/project/1.0.4 http://lime.openfl.org/xsd/project-1.0.4.xsd">
 
+    <!-- ================= APP INFO ================= -->
     <app
         title="Friday Night Funkin': P-Slice Engine"
         file="PSliceEngine"
@@ -14,6 +15,7 @@
 
     <meta build-number="342" />
 
+    <!-- ================= WINDOW ================= -->
     <window
         width="1280"
         height="720"
@@ -23,36 +25,44 @@
         vsync="false"
         allow-high-dpi="true" />
 
+    <!-- ================= SOURCE ================= -->
     <classpath name="source" />
+    <classpath name="PSliceEngine/source" />
 
-    <!-- Assets -->
+    <!-- ================= ASSETS ================= -->
     <assets path="assets/fonts"/>
     <assets path="assets/shared"/>
     <assets path="assets/week_assets" rename="assets"/>
     <assets path="example_mods" rename="mods" embed="false"/>
     <assets path="assets/videos" embed="false"/>
 
-    <!-- Core libraries (FIXED VERSIONS) -->
+    <!-- ================= LIBS (FIXED FOR CI) ================= -->
     <haxelib name="lime"/>
     <haxelib name="openfl"/>
     <haxelib name="flixel"/>
-    <haxelib name="flixel-addons" version="3.2.2"/>
+    <haxelib name="flixel-addons"/>
     <haxelib name="hxcpp"/>
-    <haxelib name="tjson" version="1.4.0"/>
-    <haxelib name="hscript-iris" version="1.1.3"/>
+    <haxelib name="tjson"/>
+    <haxelib name="hscript-iris"/>
 
-    <!-- Defines -->
+    <!-- IMPORTANT:
+         DO NOT pin versions in CI.
+         Your runner doesn't have 3.3.2 or 3.2.2 installed.
+    -->
+
+    <!-- ================= DEFINES ================= -->
     <define name="MODS_ALLOWED"/>
     <define name="HSCRIPT_ALLOWED"/>
     <define name="BASE_GAME_FILES"/>
     <define name="PSYCH_WATERMARKS"/>
+    <define name="LUA_ALLOWED"/>
 
-    <!-- iOS -->
+    <!-- ================= IOS ================= -->
     <section if="ios">
         <haxedef name="HXCPP_ARM64"/>
     </section>
 
-    <!-- Optional -->
+    <!-- ================= CLEANUP FLAGS ================= -->
     <haxedef name="FLX_NO_FOCUS_LOST_SCREEN"/>
     <haxedef name="lime_disable_assets_version"/>
 
