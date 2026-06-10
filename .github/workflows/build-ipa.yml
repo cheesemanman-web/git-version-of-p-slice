@@ -1,4 +1,4 @@
-name: Build IPA (P-Slice)
+name: Build IPA (P-Slicev2)
 
 on:
   workflow_dispatch:
