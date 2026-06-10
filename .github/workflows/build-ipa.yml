@@ -14,9 +14,23 @@ jobs:
       - name: Select Xcode
         run: sudo xcode-select -s /Applications/Xcode.app
 
+      - name: Install Haxe
+        run: |
+          brew update
+          brew install haxe
+          haxelib setup ~/haxelib
+          haxelib install hxcpp --quiet
+          haxelib install lime --quiet
+          haxelib install openfl --quiet
+
+      - name: Restore Haxe libs
+        run: |
+          haxelib list
+
       - name: Build Xcode project
         run: |
           set -o pipefail
+          cd PSliceEngine
 
           xcodebuild \
             -project PSliceEngine.xcodeproj \
@@ -25,27 +39,16 @@ jobs:
             -sdk iphoneos \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGN_IDENTITY="" \
-            DEVELOPMENT_TEAM="" \
             clean build
 
-      - name: Find .app (reliable)
+      - name: Find .app
         run: |
-          APP=$(find . -type d -name "*.app" | grep -i "Release-iphoneos" | head -n 1)
-
-          if [ -z "$APP" ]; then
-            echo "No .app found"
-            find . -name "*.app"
-            exit 1
-          fi
-
-          echo "APP=$APP"
+          APP=$(find ~/Library/Developer/Xcode/DerivedData -name "*.app" | head -n 1)
           echo "APP=$APP" >> $GITHUB_ENV
 
       - name: Create IPA
         run: |
-          rm -rf Payload
-          mkdir Payload
+          mkdir -p Payload
           cp -R "$APP" Payload/
           zip -r PSliceEngine.ipa Payload
 
