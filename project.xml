@@ -3,7 +3,6 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://lime.openfl.org/project/1.0.4 http://lime.openfl.org/xsd/project-1.0.4.xsd">
 
-    <!-- APP -->
     <app title="P-Slice Engine"
          file="PSliceEngine"
          package="com.mikolka9144.pslice"
@@ -13,7 +12,6 @@
 
     <meta build-number="342"/>
 
-    <!-- WINDOW -->
     <window width="1280"
             height="720"
             fps="60"
@@ -22,15 +20,14 @@
             vsync="false"
             allow-high-dpi="true"/>
 
-    <!-- SOURCE -->
-    <source path="PSliceEngine/source"/>
+    <!-- ✅ FIXED PATHS (ROOT LEVEL ONLY) -->
+    <source path="source"/>
 
-    <!-- ASSETS (FIXED ROOT PATHS) -->
-    <assets path="PSliceEngine/assets/fonts"/>
-    <assets path="PSliceEngine/assets/shared"/>
-    <assets path="PSliceEngine/assets/week_assets" rename="assets"/>
-    <assets path="PSliceEngine/example_mods" rename="mods" embed="false"/>
-    <assets path="PSliceEngine/assets/videos" embed="false"/>
+    <assets path="assets/fonts"/>
+    <assets path="assets/shared"/>
+    <assets path="assets/week_assets" rename="assets"/>
+    <assets path="example_mods" rename="mods" embed="false"/>
+    <assets path="assets/videos" embed="false"/>
 
     <!-- LIBS -->
     <haxelib name="lime"/>
@@ -48,12 +45,10 @@
     <define name="LUA_ALLOWED"/>
     <define name="PSYCH_WATERMARKS"/>
 
-    <!-- iOS -->
     <section if="ios">
         <haxedef name="HXCPP_ARM64"/>
     </section>
 
-    <!-- OPTIMIZATION -->
     <haxedef name="FLX_NO_FOCUS_LOST_SCREEN"/>
     <haxedef name="lime_disable_assets_version"/>
 
