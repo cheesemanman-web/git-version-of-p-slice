@@ -2,7 +2,7 @@
 -main Main
 
 # ============ SOURCE PATHS ============
--cp ../source
+-cp source
 
 # ============ LIBS ============
 -lib lime
@@ -16,14 +16,18 @@
 
 # ============ DEFINES ============
 -D MODS_ALLOWED
--D LUA_ALLOWED
 -D HSCRIPT_ALLOWED
 -D PSYCH_WATERMARKS
 -D BASE_GAME_FILES
 
+# Lua in P-Slice is internal (DO NOT use llua/linc installs)
+-D LUA_ALLOWED
+
 # ============ PLATFORM ============
 -D ios
 -D HXCPP_ARM64
+-D sys
+-D openfl
 
 # ============ OPENFL/LIME MACROS ============
 --macro keep("Main")
