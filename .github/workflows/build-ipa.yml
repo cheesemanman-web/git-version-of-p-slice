@@ -1,20 +1,24 @@
-name: iOS Build (P-Slice)
+name: P-Slice iOS Build
 
 on:
   workflow_dispatch:
 
 jobs:
-  build-ios:
+  ios-build:
     runs-on: macos-latest
 
     steps:
-      - name: Checkout
+      - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Install Haxe + deps
+      # =========================
+      # Install Haxe (NO krdlab)
+      # =========================
+      - name: Install Haxe + tools
         run: |
           brew update
           brew install haxe
+
           haxelib setup ~/haxelib
 
           haxelib install lime
@@ -23,18 +27,28 @@ jobs:
           haxelib install flixel-addons 3.3.2
           haxelib install hxcpp
           haxelib install tjson
+          haxelib install hscript
           haxelib install hscript-iris
 
-      - name: Install Lime tools
+      # =========================
+      # Ensure correct versions
+      # =========================
+      - name: Fix haxelib versions
         run: |
-          haxelib run lime setup
+          haxelib set flixel-addons 3.3.2
 
+      # =========================
+      # Build iOS (NO SIGNING)
+      # =========================
       - name: Build iOS project
         run: |
           haxelib run lime build ios
 
-      - name: Upload build
+      # =========================
+      # Upload artifact
+      # =========================
+      - name: Upload iOS build
         uses: actions/upload-artifact@v4
         with:
-          name: ios-build
-          path: export/ios/bin
+          name: ios-export
+          path: export/ios
