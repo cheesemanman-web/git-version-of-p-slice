@@ -1,47 +1,69 @@
-name: iOS Build
+name: Build P-Slice iOS IPA
 
 on:
   workflow_dispatch:
 
 jobs:
-  build-ios:
+  ios:
     runs-on: macos-14
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repo
+        uses: actions/checkout@v4
 
+      # ================= HAXE =================
       - name: Setup Haxe
         uses: krdlab/setup-haxe@v1
         with:
           haxe-version: 4.3.6
 
-      - name: Install libs
+      - name: Install dependencies
         run: |
-          haxelib install lime
-          haxelib install openfl
-          haxelib install flixel
-          haxelib install flixel-addons
-          haxelib install hscript
-          haxelib install tjson
-          haxelib install hxcpp
+          haxelib setup ~/haxelib
+          haxelib install lime --quiet
+          haxelib install openfl --quiet
+          haxelib install flixel --quiet
+          haxelib install flixel-addons --quiet
+          haxelib install hxcpp --quiet
+          haxelib install hscript --quiet
+          haxelib install hscript-iris --quiet
+          haxelib install tjson --quiet
 
-      - name: Cache haxelib
+      # ================= CACHE (SPEED BOOST) =================
+      - name: Cache Haxe build
         uses: actions/cache@v4
         with:
           path: |
             ~/haxelib
             ~/Library/Caches/haxe
-          key: haxe-${{ runner.os }}-${{ hashFiles('**/*.hxml') }}
+            ~/Library/Developer/Xcode/DerivedData
+          key: ios-${{ runner.os }}-${{ hashFiles('**/*.hxml') }}
 
+      # ================= HAXE BUILD =================
       - name: Build Haxe
         run: |
-          haxe PSliceEngine/haxe/Build.hxml -D HXCPP_ARM64
+          haxe PSliceEngine/haxe/Build.hxml
 
-      - name: Build iOS IPA
+      # ================= IOS BUILD =================
+      - name: Build Xcode project
         run: |
-          cd export/ios || true
-          xcodebuild -project PSliceEngine.xcodeproj \
+          xcodebuild \
+            -project PSliceEngine.xcodeproj \
             -scheme PSliceEngine \
+            -configuration Release \
             -sdk iphoneos \
             CODE_SIGNING_ALLOWED=NO \
-            build
+            clean build
+
+      # ================= IPA PACKAGING =================
+      - name: Package IPA
+        run: |
+          mkdir -p Payload
+          cp -r build/Release-iphoneos/PSliceEngine.app Payload/
+          zip -r PSliceEngine.ipa Payload
+
+      - name: Upload IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: PSliceEngine-iOS
+          path: PSliceEngine.ipa
