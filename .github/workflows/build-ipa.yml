@@ -17,21 +17,35 @@ jobs:
       - name: Build Xcode project
         run: |
           set -o pipefail
+
           xcodebuild \
             -project PSliceEngine.xcodeproj \
             -scheme PSliceEngine \
             -configuration Release \
             -sdk iphoneos \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            DEVELOPMENT_TEAM="" \
             clean build
 
-      - name: Find .app
+      - name: Find .app (reliable)
         run: |
-          APP=$(find ~/Library/Developer/Xcode/DerivedData -name "*.app" | head -n 1)
+          APP=$(find . -type d -name "*.app" | grep -i "Release-iphoneos" | head -n 1)
+
+          if [ -z "$APP" ]; then
+            echo "No .app found"
+            find . -name "*.app"
+            exit 1
+          fi
+
+          echo "APP=$APP"
           echo "APP=$APP" >> $GITHUB_ENV
 
       - name: Create IPA
         run: |
-          mkdir -p Payload
+          rm -rf Payload
+          mkdir Payload
           cp -R "$APP" Payload/
           zip -r PSliceEngine.ipa Payload
 
