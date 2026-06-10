@@ -22,10 +22,10 @@
             vsync="false"
             allow-high-dpi="true"/>
 
-    <!-- ✅ FIX: correct source path -->
+    <!-- SOURCE -->
     <source path="PSliceEngine/source"/>
 
-    <!-- ASSETS -->
+    <!-- ASSETS (FIXED ROOT PATHS) -->
     <assets path="PSliceEngine/assets/fonts"/>
     <assets path="PSliceEngine/assets/shared"/>
     <assets path="PSliceEngine/assets/week_assets" rename="assets"/>
