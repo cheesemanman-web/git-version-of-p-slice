@@ -1,4 +1,4 @@
- name: Build iOS IPA (P-Slice)
+name: Build iOS IPA (P-Slice)
 
 on:
   workflow_dispatch:
@@ -14,6 +14,14 @@ jobs:
         uses: actions/checkout@v4
 
       # =========================
+      # Debug: confirm project.xml exists
+      # =========================
+      - name: Check repo structure
+        run: |
+          pwd
+          ls -R
+
+      # =========================
       # Install Haxe (ARM64 safe)
       # =========================
       - name: Install Haxe
@@ -23,7 +31,7 @@ jobs:
           haxelib setup ~/haxelib
 
       # =========================
-      # Install libraries
+      # Install dependencies
       # =========================
       - name: Install Haxe libs
         run: |
@@ -38,9 +46,13 @@ jobs:
           haxelib run lime setup
 
       # =========================
-      # Build from ROOT (IMPORTANT FIX)
+      # FIXED BUILD (explicit path)
       # =========================
       - name: Build iOS
         run: |
-          ls
+          if [ ! -f "project.xml" ]; then
+            echo "ERROR: project.xml NOT FOUND in root"
+            exit 1
+          fi
+
           haxelib run lime build project.xml ios -release
