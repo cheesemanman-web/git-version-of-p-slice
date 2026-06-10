@@ -7,18 +7,10 @@ import haxe.Exception;
 import backend.Discord;
 #end
 
-// ================= PSYCH LUA FIX =================
+// ================= LUA =================
 #if LUA_ALLOWED
-#if (exists("psychlua/Lua.hx"))
 import psychlua.Lua;
 import psychlua.FunkinLua;
-#else
-// fallback stub so build won't die on CI
-package psychlua;
-
-class Lua {}
-class FunkinLua {}
-#end
 #end
 
 // ================= ACHIEVEMENTS =================
@@ -55,7 +47,7 @@ import sys.io.*;
 import js.html.*;
 #end
 
-// ================= PS-LICE CORE =================
+// ================= CORE =================
 import mikolka.funkin.custom.NativeFileSystem;
 import mikolka.funkin.*;
 import mikolka.funkin.utils.*;
@@ -77,5 +69,4 @@ import flixel.text.*;
 import flixel.tweens.*;
 import flixel.group.*;
 
-// ================= END =================
 #end
