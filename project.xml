@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-
 <project xmlns="http://lime.openfl.org/project/1.0.4"
-          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-          xsi:schemaLocation="http://lime.openfl.org/project/1.0.4 http://lime.openfl.org/xsd/project-1.0.4.xsd">
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://lime.openfl.org/project/1.0.4 http://lime.openfl.org/xsd/project-1.0.4.xsd">
 
     <!-- APP -->
     <app title="P-Slice Engine"
@@ -23,15 +22,15 @@
             vsync="false"
             allow-high-dpi="true"/>
 
-    <!-- SOURCE -->
-    <classpath name="source"/>
+    <!-- ✅ FIX: correct source path -->
+    <source path="PSliceEngine/source"/>
 
     <!-- ASSETS -->
-    <assets path="assets/fonts"/>
-    <assets path="assets/shared"/>
-    <assets path="assets/week_assets" rename="assets"/>
-    <assets path="example_mods" rename="mods" embed="false"/>
-    <assets path="assets/videos" embed="false"/>
+    <assets path="PSliceEngine/assets/fonts"/>
+    <assets path="PSliceEngine/assets/shared"/>
+    <assets path="PSliceEngine/assets/week_assets" rename="assets"/>
+    <assets path="PSliceEngine/example_mods" rename="mods" embed="false"/>
+    <assets path="PSliceEngine/assets/videos" embed="false"/>
 
     <!-- LIBS -->
     <haxelib name="lime"/>
@@ -42,22 +41,16 @@
     <haxelib name="tjson"/>
     <haxelib name="hscript-iris"/>
 
-    <!-- BASE DEFINES -->
+    <!-- DEFINES -->
     <define name="MODS_ALLOWED"/>
     <define name="HSCRIPT_ALLOWED"/>
     <define name="BASE_GAME_FILES"/>
     <define name="LUA_ALLOWED"/>
     <define name="PSYCH_WATERMARKS"/>
 
-    <!-- PLATFORM SPLIT (CRITICAL FIX) -->
-    <section if="ios || android">
-        <define name="MOBILE"/>
-        <define name="OPENFL_LOOKUP"/>
-    </section>
-
-    <section if="desktop">
-        <define name="DESKTOP"/>
-        <define name="NATIVE_LOOKUP"/>
+    <!-- iOS -->
+    <section if="ios">
+        <haxedef name="HXCPP_ARM64"/>
     </section>
 
     <!-- OPTIMIZATION -->
