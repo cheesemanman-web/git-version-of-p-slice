@@ -16,7 +16,7 @@ jobs:
 
       - name: Build Xcode project
         run: |
-
+          set -o pipefail
           xcodebuild \
             -project PSliceEngine.xcodeproj \
             -scheme PSliceEngine \
