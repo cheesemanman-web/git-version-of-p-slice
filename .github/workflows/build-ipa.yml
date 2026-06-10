@@ -64,7 +64,7 @@ jobs:
         run: |
           export DEVELOPER_DIR="/Applications/Xcode.app/Contents/Developer"
 
-          haxelib run lime build ios -nosign -verbose \
+          haxelib run lime build ios -nosign \
             -D simulator \
             -D NO_CODE_SIGNING \
             CODE_SIGNING_ALLOWED=NO \
