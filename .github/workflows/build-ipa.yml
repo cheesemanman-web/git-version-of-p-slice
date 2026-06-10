@@ -1,26 +1,23 @@
-name: P-Slice iOS Build
+name: P-Slice iOS Build (No Signing)
 
 on:
   workflow_dispatch:
 
 jobs:
-  ios-build:
+  build-ios:
     runs-on: macos-latest
 
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      # =========================
-      # Install Haxe (NO krdlab)
-      # =========================
-      - name: Install Haxe + tools
+      - name: Install Haxe
         run: |
           brew update
           brew install haxe
-
           haxelib setup ~/haxelib
 
+      - name: Install libs
+        run: |
           haxelib install lime
           haxelib install openfl
           haxelib install flixel
@@ -30,25 +27,20 @@ jobs:
           haxelib install hscript
           haxelib install hscript-iris
 
-      # =========================
-      # Ensure correct versions
-      # =========================
-      - name: Fix haxelib versions
-        run: |
-          haxelib set flixel-addons 3.3.2
-
-      # =========================
-      # Build iOS (NO SIGNING)
-      # =========================
-      - name: Build iOS project
+      - name: Build iOS (generate Xcode project)
         run: |
           haxelib run lime build ios
 
-      # =========================
-      # Upload artifact
-      # =========================
+      - name: Disable code signing (IMPORTANT)
+        run: |
+          PROJ="bin/ios/PSliceEngine.xcodeproj/project.pbxproj"
+
+          sed -i '' 's/DEVELOPMENT_TEAM = .*;/DEVELOPMENT_TEAM = "";/g' $PROJ || true
+          sed -i '' 's/CODE_SIGNING_REQUIRED = YES;/CODE_SIGNING_REQUIRED = NO;/g' $PROJ || true
+          sed -i '' 's/CODE_SIGNING_ALLOWED = YES;/CODE_SIGNING_ALLOWED = NO;/g' $PROJ || true
+
       - name: Upload iOS build
         uses: actions/upload-artifact@v4
         with:
           name: ios-export
-          path: export/ios
+          path: bin/ios
