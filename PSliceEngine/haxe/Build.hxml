@@ -1,13 +1,15 @@
-# ENTRY
+# ================= ENTRY =================
 -main Main
 
-# SOURCE
--cp source
--cp source/psychlua
--cp source/mikolka
--cp source/states
+# ================= SOURCE =================
+-cp ../source
 
-# LIBS
+# ONLY include safe runtime systems
+-cp ../source/states
+-cp ../source/mikolka
+-cp ../source/backend
+
+# ================= LIBS =================
 -lib lime
 -lib openfl
 -lib flixel
@@ -17,19 +19,21 @@
 -lib hscript-iris
 -lib tjson
 
-# DEFINES
+# ================= IOS BUILD =================
 -D ios
 -D HXCPP_ARM64
--D MODS_ALLOWED
--D HSCRIPT_ALLOWED
--D BASE_GAME_FILES
--D LUA_ALLOWED=1
+-D mobile
+-D NO_PRECOMPILED_HEADERS
 
-# IMPORTANT iOS FIXES
--D no-file-system
--D openfl-disable-stdio
+# IMPORTANT: disable desktop-only systems
+-D NO_FILE_SYSTEM
+-D NO_MODDING_LUA
 
-# MACROS
+# ================= DISABLE LUA SYSTEM =================
+-D LUA_ALLOWED=0
+-D HSCRIPT_ALLOWED=1
+
+# ================= MACROS =================
 --macro keep("Main")
 --macro flixel.system.macros.FlxDefines.run()
 --macro lime._internal.macros.DefineMacro.run()
