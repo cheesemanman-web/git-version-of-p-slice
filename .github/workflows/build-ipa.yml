@@ -16,7 +16,6 @@ jobs:
 
       - name: Build Xcode project
         run: |
-          cd PSliceEngine
 
           xcodebuild \
             -project PSliceEngine.xcodeproj \
