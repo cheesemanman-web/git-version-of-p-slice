@@ -28,7 +28,6 @@
 -D HXCPP_ARM64
 -D openfl
 -D iphonesim
---iphoneos-deployment-target 14.0
 # ============ OPENFL/LIME MACROS ============
 --macro keep("Main")
 --macro flixel.system.macros.FlxDefines.run()
