@@ -1,32 +1,22 @@
-name: P-Slice iOS IPA Build (FIXED HAXELIB PATH)
+name: P-Slice iOS IPA (FINAL FIX)
 
 on:
   workflow_dispatch:
 
 jobs:
-  build-ios:
+  ios:
     runs-on: macos-latest
 
     steps:
-      # =========================
-      # Checkout
-      # =========================
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      # =========================
-      # Install Haxe
-      # =========================
       - name: Install Haxe
         run: |
           brew update
           brew install haxe
           haxe -version
 
-      # =========================
-      # FIX: Use LOCAL haxelib folder (IMPORTANT)
-      # =========================
-      - name: Setup Haxelib (FIXED PATH)
+      - name: Setup haxelib (SAFE PATH)
         run: |
           export HAXELIB_ROOT=$GITHUB_WORKSPACE/.haxelib
           mkdir -p $HAXELIB_ROOT
@@ -43,47 +33,32 @@ jobs:
 
           haxelib run lime setup
 
-      # =========================
-      # Fix Lime config safely
-      # =========================
-      - name: Fix Lime config
+      - name: Fix Lime crash (CRITICAL)
         run: |
-          mkdir -p ~/.lime
-          echo "<config />" > ~/.lime/config.xml
+          export LIME_CONFIG_DIR=$GITHUB_WORKSPACE/.lime
+          mkdir -p $LIME_CONFIG_DIR
+          echo "<config />" > $LIME_CONFIG_DIR/config.xml
 
-      # =========================
-      # Debug structure
-      # =========================
-      - name: Show project structure
+      - name: Debug project
         run: ls -R
 
-      # =========================
-      # Build iOS (ROOT PROJECT.XML)
-      # =========================
-      - name: Build iOS (NO SIGNING)
+      - name: Build iOS (NO SIGNING, SAFE MODE)
         run: |
           export HAXELIB_ROOT=$GITHUB_WORKSPACE/.haxelib
+          export LIME_CONFIG_DIR=$GITHUB_WORKSPACE/.lime
 
           haxelib run lime build ios -verbose \
             -D CODE_SIGNING_REQUIRED=NO \
             -D CODE_SIGNING_ALLOWED=NO \
             -D AD_HOC_CODE_SIGNING_ALLOWED=NO
 
-      # =========================
-      # Package IPA
-      # =========================
-      - name: Create IPA
+      - name: Package IPA
         run: |
           cd bin/ios/Release-iphoneos || exit 0
-
           mkdir -p Payload
           cp -r *.app Payload/
-
           zip -r P-Slice.ipa Payload
 
-      # =========================
-      # Upload artifact
-      # =========================
       - name: Upload IPA
         uses: actions/upload-artifact@v4
         with:
