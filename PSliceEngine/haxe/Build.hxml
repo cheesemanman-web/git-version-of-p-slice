@@ -2,7 +2,7 @@
 -main Main
 
 # ============ SOURCE PATHS ============
--cp source
+-cp ../source
 
 # ============ LIBS ============
 -lib lime
