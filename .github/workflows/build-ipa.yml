@@ -1,128 +1,47 @@
-name: Build IPA (P-Slicev2)
+name: iOS Build
 
 on:
   workflow_dispatch:
 
 jobs:
   build-ios:
-    runs-on: macos-latest
+    runs-on: macos-14
 
     steps:
-      # =========================
-      # Checkout
-      # =========================
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      # =========================
-      # Xcode setup
-      # =========================
-      - name: Select Xcode
-        run: sudo xcode-select -s /Applications/Xcode.app
+      - name: Setup Haxe
+        uses: krdlab/setup-haxe@v1
+        with:
+          haxe-version: 4.3.6
 
-      # =========================
-      # Cache Haxelib
-      # =========================
-      - name: Cache Haxelib
+      - name: Install libs
+        run: |
+          haxelib install lime
+          haxelib install openfl
+          haxelib install flixel
+          haxelib install flixel-addons
+          haxelib install hscript
+          haxelib install tjson
+          haxelib install hxcpp
+
+      - name: Cache haxelib
         uses: actions/cache@v4
         with:
           path: |
             ~/haxelib
-            ~/.haxelib
-          key: haxelib-${{ runner.os }}-${{ hashFiles('**/*.hxml') }}
+            ~/Library/Caches/haxe
+          key: haxe-${{ runner.os }}-${{ hashFiles('**/*.hxml') }}
 
-      # =========================
-      # Install Haxe
-      # =========================
-      - name: Install Haxe
-        run: |
-          brew update
-          brew install haxe || true
-          haxelib setup ~/haxelib
-
-      # =========================
-      # Install dependencies
-      # =========================
-      - name: Install Haxe dependencies
-        run: |
-          haxelib install lime --quiet
-          haxelib install openfl --quiet
-          haxelib install hxcpp --quiet
-          haxelib install flixel --quiet
-          haxelib install flixel-addons --quiet
-          haxelib install flixel-ui --quiet
-          haxelib install hscript --quiet
-          haxelib install hscript-iris --quiet
-          haxelib install tjson --quiet
-
-      # =========================
-      # Cache Xcode DerivedData
-      # =========================
-      - name: Cache DerivedData
-        uses: actions/cache@v4
-        with:
-          path: ~/Library/Developer/Xcode/DerivedData
-          key: xcode-${{ runner.os }}-${{ hashFiles('**/*.xcodeproj/**') }}
-
-      # =========================
-      # PATH fix
-      # =========================
-      - name: Export PATH
-        run: echo "/opt/homebrew/bin" >> $GITHUB_PATH
-
-      # =========================
-      # BUILD HAXE (FIXED CORE)
-      # =========================
       - name: Build Haxe
         run: |
-          set -e
+          haxe PSliceEngine/haxe/Build.hxml -D HXCPP_ARM64
 
-          cd "$GITHUB_WORKSPACE/PSliceEngine"
-
-          echo "=== Project structure ==="
-          ls -R haxe
-
-          echo "=== Running Haxe build ==="
-          haxe haxe/Build.hxml -D HXCPP_ARM64 -cpp build/ios
-
-      # =========================
-      # Build Xcode project
-      # =========================
-      - name: Build Xcode
+      - name: Build iOS IPA
         run: |
-          set -e
-
-          xcodebuild \
-            -project "$GITHUB_WORKSPACE/PSliceEngine.xcodeproj" \
+          cd export/ios || true
+          xcodebuild -project PSliceEngine.xcodeproj \
             -scheme PSliceEngine \
-            -configuration Release \
             -sdk iphoneos \
             CODE_SIGNING_ALLOWED=NO \
-            CODE_SIGNING_REQUIRED=NO \
-            clean build
-
-      # =========================
-      # Better IPA packaging
-      # =========================
-      - name: Create IPA
-        run: |
-          set -e
-
-          APP_PATH=$(find ~/Library/Developer/Xcode/DerivedData -name "*.app" | head -n 1)
-
-          echo "Found app: $APP_PATH"
-
-          rm -rf Payload
-          mkdir Payload
-          cp -R "$APP_PATH" Payload/
-
-          zip -r PSliceEngine.ipa Payload
-
-      # =========================
-      # Upload artifact
-      # =========================
-      - name: Upload IPA
-        uses: actions/upload-artifact@v4
-        with:
-          name: PSliceEngine-IPA
-          path: PSliceEngine.ipa
+            build
