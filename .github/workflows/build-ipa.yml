@@ -23,17 +23,17 @@ jobs:
           haxelib install lime --quiet
           haxelib install openfl --quiet
 
-      - name: Restore Haxe libs
+      - name: Debug workspace
         run: |
-          haxelib list
+          echo "WORKSPACE: $GITHUB_WORKSPACE"
+          ls -la "$GITHUB_WORKSPACE"
 
       - name: Build Xcode project
         run: |
           set -o pipefail
-          cd PSliceEngine
 
           xcodebuild \
-            -project PSliceEngine.xcodeproj \
+            -project "$GITHUB_WORKSPACE/PSliceEngine.xcodeproj" \
             -scheme PSliceEngine \
             -configuration Release \
             -sdk iphoneos \
@@ -44,6 +44,7 @@ jobs:
       - name: Find .app
         run: |
           APP=$(find ~/Library/Developer/Xcode/DerivedData -name "*.app" | head -n 1)
+          echo "APP=$APP"
           echo "APP=$APP" >> $GITHUB_ENV
 
       - name: Create IPA
