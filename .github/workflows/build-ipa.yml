@@ -1,4 +1,4 @@
-name: Build P-Slice iOS IPA
+name: Build P-Slice iOS IPA (FIXED)
 
 on:
   workflow_dispatch:
@@ -11,8 +11,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install Haxe (safe method)
+      - name: Install Haxe (stable fix)
         run: |
+          brew update
           brew install haxe
           haxe -version
 
@@ -29,12 +30,19 @@ jobs:
           haxelib install tjson
           haxelib run lime setup
 
-      - name: Show project location (debug)
+      - name: Fix Lime crash (put_env fix)
+        run: |
+          export HOME=$RUNNER_TEMP
+          mkdir -p $HOME/.lime
+          echo '<config />' > $HOME/.lime/config.xml
+
+      - name: Debug project files
         run: |
           ls -R
 
-      - name: Build iOS (ROOT FIX)
+      - name: Build iOS (NO SIGNING)
         run: |
+          export HOME=$RUNNER_TEMP
           haxelib run lime build ios -verbose \
             -D CODE_SIGNING_REQUIRED=NO \
             -D CODE_SIGNING_ALLOWED=NO
