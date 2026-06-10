@@ -1,22 +1,31 @@
-name: iOS Build (Unsigned IPA)
+name: P-Slice iOS IPA Build
 
 on:
   workflow_dispatch:
 
 jobs:
-  build-ios:
+  ios-build:
     runs-on: macos-13
 
     steps:
+      # =========================
+      # 1. Checkout
+      # =========================
       - name: Checkout repo
         uses: actions/checkout@v4
 
+      # =========================
+      # 2. Setup Haxe
+      # =========================
       - name: Setup Haxe
         uses: krdlab/setup-haxe@v1
         with:
           haxe-version: 4.3.6
 
-      - name: Install Haxelib dependencies
+      # =========================
+      # 3. Install dependencies
+      # =========================
+      - name: Install Haxelib deps
         run: |
           haxelib setup ~/haxelib
           haxelib install lime
@@ -26,17 +35,13 @@ jobs:
           haxelib install hxcpp
           haxelib install tjson
           haxelib install hscript-iris
-          haxelib list
 
-      - name: Install project dependencies (if hxml exists)
+      # =========================
+      # 4. Build iOS (UNSIGNED)
+      # =========================
+      - name: Build iOS project (no signing)
         run: |
-          if [ -f "PSliceEngine/haxe/Build.hxml" ]; then
-            echo "Found Build.hxml"
-          fi
-
-      - name: Build iOS (NO SIGNING FIX)
-        run: |
-          cd PSliceEngine || exit 1
+          cd PSliceEngine
 
           lime build ios -release \
             -D ios \
@@ -44,17 +49,31 @@ jobs:
             -D CODE_SIGNING_ALLOWED=0 \
             -D CODE_SIGNING_REQUIRED=0
 
-      - name: Patch Xcode signing (extra safety)
+      # =========================
+      # 5. Package IPA
+      # =========================
+      - name: Create IPA
         run: |
-          PROJ="bin/ios/PSliceEngine.xcodeproj"
+          cd PSliceEngine/bin/ios
 
-          if [ -d "$PROJ" ]; then
-            echo "Disabling code signing in project"
-            /usr/libexec/PlistBuddy -c "Set :objects:CODE_SIGN_IDENTITY ''" "$PROJ/project.pbxproj" || true
+          APP_NAME="PSliceEngine.app"
+
+          if [ ! -d "$APP_NAME" ]; then
+            echo "ERROR: .app not found"
+            ls
+            exit 1
           fi
 
-      - name: Archive artifact
+          mkdir -p Payload
+          cp -R "$APP_NAME" Payload/
+
+          zip -r PSliceEngine.ipa Payload
+
+      # =========================
+      # 6. Upload artifact
+      # =========================
+      - name: Upload IPA
         uses: actions/upload-artifact@v4
         with:
-          name: ios-build
-          path: PSliceEngine/bin/ios
+          name: PSliceEngine-iOS-IPA
+          path: PSliceEngine/bin/ios/PSliceEngine.ipa
