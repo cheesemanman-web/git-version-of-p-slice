@@ -1,79 +1,40 @@
-name: P-Slice iOS IPA Build
+name: iOS Build (P-Slice)
 
 on:
   workflow_dispatch:
 
 jobs:
-  ios-build:
-    runs-on: macos-13
+  build-ios:
+    runs-on: macos-latest
 
     steps:
-      # =========================
-      # 1. Checkout
-      # =========================
-      - name: Checkout repo
+      - name: Checkout
         uses: actions/checkout@v4
 
-      # =========================
-      # 2. Setup Haxe
-      # =========================
-      - name: Setup Haxe
-        uses: krdlab/setup-haxe@v1
-        with:
-          haxe-version: 4.3.6
-
-      # =========================
-      # 3. Install dependencies
-      # =========================
-      - name: Install Haxelib deps
+      - name: Install Haxe + deps
         run: |
+          brew update
+          brew install haxe
           haxelib setup ~/haxelib
+
           haxelib install lime
           haxelib install openfl
           haxelib install flixel
-          haxelib install flixel-addons
+          haxelib install flixel-addons 3.3.2
           haxelib install hxcpp
           haxelib install tjson
           haxelib install hscript-iris
 
-      # =========================
-      # 4. Build iOS (UNSIGNED)
-      # =========================
-      - name: Build iOS project (no signing)
+      - name: Install Lime tools
         run: |
-          cd PSliceEngine
+          haxelib run lime setup
 
-          lime build ios -release \
-            -D ios \
-            -D NO_CODE_SIGN \
-            -D CODE_SIGNING_ALLOWED=0 \
-            -D CODE_SIGNING_REQUIRED=0
-
-      # =========================
-      # 5. Package IPA
-      # =========================
-      - name: Create IPA
+      - name: Build iOS project
         run: |
-          cd PSliceEngine/bin/ios
+          haxelib run lime build ios
 
-          APP_NAME="PSliceEngine.app"
-
-          if [ ! -d "$APP_NAME" ]; then
-            echo "ERROR: .app not found"
-            ls
-            exit 1
-          fi
-
-          mkdir -p Payload
-          cp -R "$APP_NAME" Payload/
-
-          zip -r PSliceEngine.ipa Payload
-
-      # =========================
-      # 6. Upload artifact
-      # =========================
-      - name: Upload IPA
+      - name: Upload build
         uses: actions/upload-artifact@v4
         with:
-          name: PSliceEngine-iOS-IPA
-          path: PSliceEngine/bin/ios/PSliceEngine.ipa
+          name: ios-build
+          path: export/ios/bin
