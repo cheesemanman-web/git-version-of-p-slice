@@ -14,12 +14,25 @@ jobs:
       - name: Select Xcode
         run: sudo xcode-select -s /Applications/Xcode.app
 
-      - name: Install Haxe
+      - name: Install Haxe + libs
         run: |
           brew update
           brew install haxe
+
           haxelib setup ~/haxelib
-          haxelib install hxcpp --quiet
+
+          haxelib install hxcpp --always
+          haxelib install lime --always
+          haxelib install openfl --always
+          haxelib install flixel --always
+
+          haxelib run lime setup
+
+      - name: Restore project dependencies (if build.hxml exists)
+        run: |
+          if [ -f "build.hxml" ]; then
+            haxe build.hxml
+          fi
 
       - name: Export PATH
         run: echo "/opt/homebrew/bin" >> $GITHUB_PATH
