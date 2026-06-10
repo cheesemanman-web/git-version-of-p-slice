@@ -1,25 +1,36 @@
-name: Build P-Slice iOS IPA (FIXED)
+name: P-Slice iOS IPA Build
 
 on:
   workflow_dispatch:
 
 jobs:
-  ios:
+  build-ios:
     runs-on: macos-latest
 
     steps:
+      # =========================
+      # Checkout repo
+      # =========================
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install Haxe (stable fix)
+      # =========================
+      # Install Haxe (safe method)
+      # =========================
+      - name: Install Haxe
         run: |
           brew update
           brew install haxe
           haxe -version
 
-      - name: Setup Haxelib
+      # =========================
+      # Setup stable haxelib (NO HOME hacks)
+      # =========================
+      - name: Setup Haxelib + dependencies
         run: |
-          haxelib setup ~/haxelib
+          mkdir -p ~/.haxelib
+          haxelib setup ~/.haxelib
+
           haxelib install lime
           haxelib install openfl
           haxelib install flixel
@@ -28,34 +39,51 @@ jobs:
           haxelib install hscript
           haxelib install hscript-iris
           haxelib install tjson
+
           haxelib run lime setup
 
-      - name: Fix Lime crash (put_env fix)
+      # =========================
+      # Fix Lime config (safe)
+      # =========================
+      - name: Fix Lime config
         run: |
-          export HOME=$RUNNER_TEMP
-          mkdir -p $HOME/.lime
-          echo '<config />' > $HOME/.lime/config.xml
+          mkdir -p ~/.lime
+          echo "<config />" > ~/.lime/config.xml
 
-      - name: Debug project files
+      # =========================
+      # Debug project structure
+      # =========================
+      - name: Show repo structure
         run: |
           ls -R
 
-      - name: Build iOS (NO SIGNING)
+      # =========================
+      # Build iOS from ROOT (IMPORTANT)
+      # =========================
+      - name: Build iOS (unsigned)
         run: |
-          export HOME=$RUNNER_TEMP
           haxelib run lime build ios -verbose \
             -D CODE_SIGNING_REQUIRED=NO \
-            -D CODE_SIGNING_ALLOWED=NO
+            -D CODE_SIGNING_ALLOWED=NO \
+            -D AD_HOC_CODE_SIGNING_ALLOWED=NO
 
+      # =========================
+      # Package IPA
+      # =========================
       - name: Package IPA
         run: |
           cd bin/ios/Release-iphoneos || exit 0
+
           mkdir -p Payload
           cp -r *.app Payload/
-          zip -r PSlice.ipa Payload
 
+          zip -r P-Slice.ipa Payload
+
+      # =========================
+      # Upload artifact
+      # =========================
       - name: Upload IPA
         uses: actions/upload-artifact@v4
         with:
-          name: PSlice-IPA
-          path: bin/ios/Release-iphoneos/PSlice.ipa
+          name: P-Slice-iOS-IPA
+          path: bin/ios/Release-iphoneos/P-Slice.ipa
