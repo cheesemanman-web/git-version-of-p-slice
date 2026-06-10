@@ -7,71 +7,66 @@ jobs:
   build-ios:
     runs-on: macos-latest
 
-    env:
-      HAXELIB_ROOT: ~/haxelib
-      DERIVED_DATA: ~/Library/Developer/Xcode/DerivedData
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # =========================
-      # XCODE SETUP
-      # =========================
       - name: Select Xcode
-        run: sudo xcode-select -s /Applications/Xcode_16.4.app
+        run: sudo xcode-select -s /Applications/Xcode.app
 
       # =========================
-      # HAXE INSTALL
+      # CACHE: Homebrew + Haxe libs
       # =========================
+      - name: Cache Haxelib
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/haxelib
+            ~/.haxelib
+          key: haxelib-${{ runner.os }}-${{ hashFiles('**/*.hxml') }}
+
       - name: Install Haxe
         run: |
           brew update
-          brew install haxe
-          haxelib setup $HAXELIB_ROOT
+          brew install haxe || true
+          haxelib setup ~/haxelib
 
-      # =========================
-      # CACHE HAXELIB (IMPORTANT)
-      # =========================
-      - name: Cache haxelib
-        uses: actions/cache@v4
-        with:
-          path: ~/haxelib
-          key: ${{ runner.os }}-haxelib-${{ hashFiles('**/hxml', '**/haxelib.json', '**/project.xml') }}
-          restore-keys: |
-            ${{ runner.os }}-haxelib-
-
-      # =========================
-      # INSTALL DEPENDENCIES
-      # =========================
       - name: Install Haxe dependencies
         run: |
-          haxelib install lime --always
-          haxelib install openfl --always
-          haxelib install hxcpp --always
-          haxelib install flixel --always
-          haxelib install flixel-addons --always
-          haxelib install hscript --always
-          haxelib install hscript-iris --always
-          haxelib install tjson --always
+          haxelib install lime --quiet
+          haxelib install openfl --quiet
+          haxelib install hxcpp --quiet
+          haxelib install flixel --quiet
+          haxelib install flixel-addons --quiet
+          haxelib install flixel-ui --quiet
+          haxelib install hscript --quiet
+          haxelib install hscript-iris --quiet
+          haxelib install tjson --quiet
 
       # =========================
-      # OPTIONAL HMM
+      # CACHE: DerivedData (Xcode speed boost)
       # =========================
-      - name: Install HMM (optional)
+      - name: Cache DerivedData
+        uses: actions/cache@v4
+        with:
+          path: ~/Library/Developer/Xcode/DerivedData
+          key: xcode-${{ runner.os }}-${{ hashFiles('**/*.xcodeproj/**') }}
+
+      - name: Export PATH
+        run: echo "/opt/homebrew/bin" >> $GITHUB_PATH
+
+      # =========================
+      # FIXED BUILD STEP (THIS WAS YOUR BUG)
+      # =========================
+      - name: Build Haxe + Xcode
         run: |
-          haxelib install hmm --always || true
-          if [ -f hmm.json ]; then
-            haxelib run hmm install
-          fi
+          set -e
+          cd "$GITHUB_WORKSPACE"
 
-      # =========================
-      # BUILD XCODE
-      # =========================
-      - name: Build Xcode project
-        run: |
-          set -o pipefail
+          echo "=== Running Haxe ==="
+          haxe haxe/Build.hxml -D HXCPP_ARM64 -cpp build/ios
 
+          echo "=== Running Xcode build ==="
           xcodebuild \
             -project "$GITHUB_WORKSPACE/PSliceEngine.xcodeproj" \
             -scheme PSliceEngine \
@@ -82,29 +77,23 @@ jobs:
             clean build
 
       # =========================
-      # FIND APP (ROBUST)
+      # BETTER IPA PACKAGING (NO DerivedData guessing)
       # =========================
-      - name: Locate .app
-        run: |
-          APP=$(find "$DERIVED_DATA" -type d -name "*.app" | grep "Release-iphoneos" | head -n 1)
-          echo "APP=$APP" >> $GITHUB_ENV
-          echo "Found app: $APP"
-
-      # =========================
-      # CREATE PROPER IPA
-      # =========================
-      - name: Create IPA
+      - name: Create IPA (proper method)
         run: |
           set -e
 
-          mkdir -p Payload
-          cp -R "$APP" Payload/
+          APP_PATH=$(find ~/Library/Developer/Xcode/DerivedData -name "*.app" | head -n 1)
 
-          rm -f PSliceEngine.ipa
-          ditto -c -k --sequesterRsrc --keepParent Payload PSliceEngine.ipa
+          echo "Found app: $APP_PATH"
+
+          mkdir -p Payload
+          cp -R "$APP_PATH" Payload/
+
+          zip -r PSliceEngine.ipa Payload
 
       # =========================
-      # UPLOAD ARTIFACT
+      # ARTIFACT UPLOAD
       # =========================
       - name: Upload IPA
         uses: actions/upload-artifact@v4
