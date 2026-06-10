@@ -1,69 +1,51 @@
-name: Build P-Slice iOS IPA
+name: Build iOS IPA (P-Slice)
 
 on:
   workflow_dispatch:
+  push:
+    branches: [ main ]
 
 jobs:
-  ios:
-    runs-on: macos-14
+  build-ios:
+    runs-on: macos-13   # ✅ IMPORTANT: NOT macos-latest
 
     steps:
-      - name: Checkout repo
+      - name: Checkout
         uses: actions/checkout@v4
 
-      # ================= HAXE =================
-      - name: Setup Haxe
-        uses: krdlab/setup-haxe@v1
-        with:
-          haxe-version: 4.3.6
-
-      - name: Install dependencies
+      # =========================
+      # FIX: Force x64 environment
+      # =========================
+      - name: Setup Rosetta (fix arm64 tools)
         run: |
+          softwareupdate --install-rosetta --agree-to-license || true
+          arch
+
+      # =========================
+      # Install Haxe (x64-safe method)
+      # =========================
+      - name: Install Haxe
+        run: |
+          brew update
+          brew install haxe
           haxelib setup ~/haxelib
-          haxelib install lime --quiet
-          haxelib install openfl --quiet
-          haxelib install flixel --quiet
-          haxelib install flixel-addons --quiet
-          haxelib install hxcpp --quiet
-          haxelib install hscript --quiet
-          haxelib install hscript-iris --quiet
-          haxelib install tjson --quiet
 
-      # ================= CACHE (SPEED BOOST) =================
-      - name: Cache Haxe build
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/haxelib
-            ~/Library/Caches/haxe
-            ~/Library/Developer/Xcode/DerivedData
-          key: ios-${{ runner.os }}-${{ hashFiles('**/*.hxml') }}
-
-      # ================= HAXE BUILD =================
-      - name: Build Haxe
+      - name: Install libraries
         run: |
-          haxe PSliceEngine/haxe/Build.hxml
+          haxelib install lime
+          haxelib install openfl
+          haxelib install flixel
+          haxelib install flixel-addons
+          haxelib install hxcpp
+          haxelib install hscript
+          haxelib install hscript-iris
+          haxelib install tjson
+          haxelib run lime setup
 
-      # ================= IOS BUILD =================
-      - name: Build Xcode project
+      # =========================
+      # Build
+      # =========================
+      - name: Build iOS
         run: |
-          xcodebuild \
-            -project PSliceEngine.xcodeproj \
-            -scheme PSliceEngine \
-            -configuration Release \
-            -sdk iphoneos \
-            CODE_SIGNING_ALLOWED=NO \
-            clean build
-
-      # ================= IPA PACKAGING =================
-      - name: Package IPA
-        run: |
-          mkdir -p Payload
-          cp -r build/Release-iphoneos/PSliceEngine.app Payload/
-          zip -r PSliceEngine.ipa Payload
-
-      - name: Upload IPA
-        uses: actions/upload-artifact@v4
-        with:
-          name: PSliceEngine-iOS
-          path: PSliceEngine.ipa
+          cd PSliceEngine
+          haxelib run lime build ios -release
