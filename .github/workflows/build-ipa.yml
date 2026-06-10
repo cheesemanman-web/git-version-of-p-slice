@@ -1,4 +1,4 @@
-name: P-Slice iOS IPA Build
+name: P-Slice iOS IPA Build (FIXED HAXELIB PATH)
 
 on:
   workflow_dispatch:
@@ -9,13 +9,13 @@ jobs:
 
     steps:
       # =========================
-      # Checkout repo
+      # Checkout
       # =========================
       - name: Checkout
         uses: actions/checkout@v4
 
       # =========================
-      # Install Haxe (safe method)
+      # Install Haxe
       # =========================
       - name: Install Haxe
         run: |
@@ -24,12 +24,13 @@ jobs:
           haxe -version
 
       # =========================
-      # Setup stable haxelib (NO HOME hacks)
+      # FIX: Use LOCAL haxelib folder (IMPORTANT)
       # =========================
-      - name: Setup Haxelib + dependencies
+      - name: Setup Haxelib (FIXED PATH)
         run: |
-          mkdir -p ~/.haxelib
-          haxelib setup ~/.haxelib
+          export HAXELIB_ROOT=$GITHUB_WORKSPACE/.haxelib
+          mkdir -p $HAXELIB_ROOT
+          haxelib setup $HAXELIB_ROOT
 
           haxelib install lime
           haxelib install openfl
@@ -43,7 +44,7 @@ jobs:
           haxelib run lime setup
 
       # =========================
-      # Fix Lime config (safe)
+      # Fix Lime config safely
       # =========================
       - name: Fix Lime config
         run: |
@@ -51,17 +52,18 @@ jobs:
           echo "<config />" > ~/.lime/config.xml
 
       # =========================
-      # Debug project structure
+      # Debug structure
       # =========================
-      - name: Show repo structure
-        run: |
-          ls -R
+      - name: Show project structure
+        run: ls -R
 
       # =========================
-      # Build iOS from ROOT (IMPORTANT)
+      # Build iOS (ROOT PROJECT.XML)
       # =========================
-      - name: Build iOS (unsigned)
+      - name: Build iOS (NO SIGNING)
         run: |
+          export HAXELIB_ROOT=$GITHUB_WORKSPACE/.haxelib
+
           haxelib run lime build ios -verbose \
             -D CODE_SIGNING_REQUIRED=NO \
             -D CODE_SIGNING_ALLOWED=NO \
@@ -70,7 +72,7 @@ jobs:
       # =========================
       # Package IPA
       # =========================
-      - name: Package IPA
+      - name: Create IPA
         run: |
           cd bin/ios/Release-iphoneos || exit 0
 
