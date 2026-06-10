@@ -1,4 +1,4 @@
-name: Build P-Slice iOS (Simulator No Signing)
+name: please build ipa brochacho
 
 on:
   workflow_dispatch:
@@ -9,13 +9,13 @@ jobs:
     runs-on: macos-latest
 
     steps:
-      - name: Checkout
+      - name: checkout
         uses: actions/checkout@v4
 
       # =========================
       # INSTALL HAXE (FIX ARM64 ISSUE)
       # =========================
-      - name: Install Haxe + dependencies
+      - name: install haxe and dependencies
         run: |
           brew update
           brew install haxe neko
@@ -43,7 +43,7 @@ jobs:
       # =========================
       # FORCE PROJECT ROOT
       # =========================
-      - name: Verify project
+      - name: verify project
         run: |
           ls -R
           test -f project.xml
@@ -51,20 +51,20 @@ jobs:
       # =========================
       # DISABLE XCODE SIGNING (IMPORTANT)
       # =========================
-      - name: Configure Xcode (NO SIGNING)
+      - name: config xcode to shut up about signing
         run: |
           echo "Disabling code signing for CI build..."
 
           defaults write com.apple.dt.Xcode IDEPackageOnlyUseVersionsFromResolvedFile -bool YES
 
       # =========================
-      # BUILD IOS SIMULATOR (NO SIGNING)
+      # BUILD IOS PLEASE BRO
       # =========================
-      - name: Build iOS Simulator
+      - name: shut up xcode
         run: |
           export DEVELOPER_DIR="/Applications/Xcode.app/Contents/Developer"
 
-          haxelib run lime build ios -simulator -verbose \
+          haxelib run lime build ios -nosign -verbose \
             -D simulator \
             -D NO_CODE_SIGNING \
             CODE_SIGNING_ALLOWED=NO \
@@ -75,10 +75,10 @@ jobs:
       # =========================
       # PACKAGE OUTPUT
       # =========================
-      - name: Upload build artifact
+      - name: YES YES YES
         uses: actions/upload-artifact@v4
         with:
-          name: pslice-ios-simulator-build
+          name: pslice-ios-build
           path: |
             export/release/ios/bin
             bin/ios
