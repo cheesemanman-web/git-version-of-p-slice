@@ -8,14 +8,20 @@ jobs:
     runs-on: macos-latest
 
     steps:
+      # =========================
+      # Checkout
+      # =========================
       - name: Checkout
         uses: actions/checkout@v4
 
+      # =========================
+      # Xcode setup
+      # =========================
       - name: Select Xcode
         run: sudo xcode-select -s /Applications/Xcode.app
 
       # =========================
-      # CACHE: Homebrew + Haxe libs
+      # Cache Haxelib
       # =========================
       - name: Cache Haxelib
         uses: actions/cache@v4
@@ -25,12 +31,18 @@ jobs:
             ~/.haxelib
           key: haxelib-${{ runner.os }}-${{ hashFiles('**/*.hxml') }}
 
+      # =========================
+      # Install Haxe
+      # =========================
       - name: Install Haxe
         run: |
           brew update
           brew install haxe || true
           haxelib setup ~/haxelib
 
+      # =========================
+      # Install dependencies
+      # =========================
       - name: Install Haxe dependencies
         run: |
           haxelib install lime --quiet
@@ -44,7 +56,7 @@ jobs:
           haxelib install tjson --quiet
 
       # =========================
-      # CACHE: DerivedData (Xcode speed boost)
+      # Cache Xcode DerivedData
       # =========================
       - name: Cache DerivedData
         uses: actions/cache@v4
@@ -52,21 +64,34 @@ jobs:
           path: ~/Library/Developer/Xcode/DerivedData
           key: xcode-${{ runner.os }}-${{ hashFiles('**/*.xcodeproj/**') }}
 
+      # =========================
+      # PATH fix
+      # =========================
       - name: Export PATH
         run: echo "/opt/homebrew/bin" >> $GITHUB_PATH
 
       # =========================
-      # FIXED BUILD STEP (THIS WAS YOUR BUG)
+      # BUILD HAXE (FIXED CORE)
       # =========================
-      - name: Build Haxe + Xcode
+      - name: Build Haxe
         run: |
           set -e
-          cd "$GITHUB_WORKSPACE"
 
-          echo "=== Running Haxe ==="
+          cd "$GITHUB_WORKSPACE/PSliceEngine"
+
+          echo "=== Project structure ==="
+          ls -R haxe
+
+          echo "=== Running Haxe build ==="
           haxe haxe/Build.hxml -D HXCPP_ARM64 -cpp build/ios
 
-          echo "=== Running Xcode build ==="
+      # =========================
+      # Build Xcode project
+      # =========================
+      - name: Build Xcode
+        run: |
+          set -e
+
           xcodebuild \
             -project "$GITHUB_WORKSPACE/PSliceEngine.xcodeproj" \
             -scheme PSliceEngine \
@@ -77,9 +102,9 @@ jobs:
             clean build
 
       # =========================
-      # BETTER IPA PACKAGING (NO DerivedData guessing)
+      # Better IPA packaging
       # =========================
-      - name: Create IPA (proper method)
+      - name: Create IPA
         run: |
           set -e
 
@@ -87,13 +112,14 @@ jobs:
 
           echo "Found app: $APP_PATH"
 
-          mkdir -p Payload
+          rm -rf Payload
+          mkdir Payload
           cp -R "$APP_PATH" Payload/
 
           zip -r PSliceEngine.ipa Payload
 
       # =========================
-      # ARTIFACT UPLOAD
+      # Upload artifact
       # =========================
       - name: Upload IPA
         uses: actions/upload-artifact@v4
