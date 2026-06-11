@@ -50,6 +50,7 @@
     <!-- iOS -->
     <section if="ios">
         <haxedef name="HXCPP_ARM64"/>
+        <set name="ios.pslice-icon-dir" value="assets/meta/ios-icons" />
     </section>
 
     <!-- Optional -->
