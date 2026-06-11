@@ -64,6 +64,19 @@ jobs:
       - name: Build iOS app
         run: |
           echo "=== Starting iOS build ==="
+          
+          # Determine which directory contains project.xml
+          if [ -f "project.xml" ]; then
+            PROJECT_DIR="."
+          elif [ -f "PSliceEngine/project.xml" ]; then
+            PROJECT_DIR="PSliceEngine"
+          else
+            echo "ERROR: project.xml not found in expected locations!"
+            exit 1
+          fi
+          
+          # Change to the project directory and run build
+          cd "$PROJECT_DIR"
           haxelib run lime build ios -nosign -verbose 2>&1 | tee build-output.log
           BUILD_STATUS=${PIPESTATUS[0]}
           
