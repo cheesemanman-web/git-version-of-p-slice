@@ -1,55 +1,61 @@
 <?xml version="1.0" encoding="utf-8"?>
-<project xmlns="http://lime.openfl.org/project/1.0.4"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://lime.openfl.org/project/1.0.4 http://lime.openfl.org/xsd/project-1.0.4.xsd">
+<project
+    xmlns="http://lime.openfl.org/project/1.0.4"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://lime.openfl.org/project/1.0.4 http://lime.openfl.org/xsd/project-1.0.4.xsd">
 
-    <app title="P-Slice Engine"
-         file="PSliceEngine"
-         package="com.mikolka9144.pslice"
-         main="Main"
-         version="3.4.2"
-         company="mikolka9144"/>
+    <app
+        title="Friday Night Funkin': P-Slice Engine"
+        file="PSliceEngine"
+        package="com.mikolka9144.pslice"
+        main="Main"
+        version="3.4.2"
+        company="mikolka9144" />
 
-    <meta build-number="342"/>
+    <meta build-number="342" />
 
-    <window width="1280"
-            height="720"
-            fps="60"
-            background="#000000"
-            hardware="true"
-            vsync="false"
-            allow-high-dpi="true"/>
+    <window
+        width="1280"
+        height="720"
+        fps="60"
+        background="#000000"
+        hardware="true"
+        vsync="false"
+        allow-high-dpi="true" />
 
-    <!-- ✅ FIXED PATHS (ROOT LEVEL ONLY) -->
-    <source path="source"/>
+    <!-- Source -->
+    <classpath name="source" />
 
-    <assets path="assets/fonts"/>
-    <assets path="assets/shared"/>
-    <assets path="assets/week_assets" rename="assets"/>
-    <assets path="example_mods" rename="mods" embed="false"/>
-    <assets path="assets/videos" embed="false"/>
+    <!-- Assets -->
+    <assets path="assets/fonts" />
+    <assets path="assets/shared" />
+    <assets path="assets/week_assets" rename="assets" />
+    <assets path="example_mods" rename="mods" embed="false" />
+    <assets path="assets/videos" embed="false" />
 
-    <!-- LIBS -->
-    <haxelib name="lime"/>
-    <haxelib name="openfl"/>
-    <haxelib name="flixel"/>
-    <haxelib name="flixel-addons"/>
-    <haxelib name="hxcpp"/>
-    <haxelib name="tjson"/>
-    <haxelib name="hscript-iris"/>
+    <!-- Libraries -->
+    <haxelib name="lime" />
+    <haxelib name="openfl" />
+    <haxelib name="flixel" />
+    <haxelib name="flixel-addons" />
+    <haxelib name="hxcpp" />
+    <haxelib name="tjson" />
+    <haxelib name="hscript-iris" />
 
-    <!-- DEFINES -->
-    <define name="MODS_ALLOWED"/>
-    <define name="HSCRIPT_ALLOWED"/>
-    <define name="BASE_GAME_FILES"/>
-    <define name="LUA_ALLOWED"/>
-    <define name="PSYCH_WATERMARKS"/>
+    <!-- Defines -->
+    <define name="MODS_ALLOWED" />
+    <define name="HSCRIPT_ALLOWED" />
+    <define name="BASE_GAME_FILES" />
+    <define name="LUA_ALLOWED" />
+    <define name="PSYCH_WATERMARKS" />
 
+    <!-- iOS -->
     <section if="ios">
-        <haxedef name="HXCPP_ARM64"/>
+        <haxedef name="HXCPP_ARM64" />
     </section>
 
-    <haxedef name="FLX_NO_FOCUS_LOST_SCREEN"/>
-    <haxedef name="lime_disable_assets_version"/>
+    <!-- Misc -->
+    <haxedef name="FLX_NO_FOCUS_LOST_SCREEN" />
+    <haxedef name="lime_disable_assets_version" />
 
 </project>
