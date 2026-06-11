@@ -42,6 +42,18 @@ jobs:
         env:
           HAXELIB_ROOT: ${{ github.workspace }}/.haxelib
 
+      - name: Install custom git libraries
+        run: |
+          echo "=== Installing custom git-based libraries ==="
+          haxelib git grig.audio https://gitlab.com/haxe-grig/grig.audio.git cbf91e2180fd2e374924fe74844086aab7891666 --quiet --skip-dependencies
+          haxelib git flxanimate https://github.com/Psych-Slice/FlxAnimate.git 82a720663f9ed6328d91a727c2b17501d91e3b11 --quiet --skip-dependencies
+          haxelib git funkin.vis https://github.com/FunkinCrew/funkVis 22b1ce089dd924f15cdc4632397ef3504d464e90 --quiet --skip-dependencies
+          
+          echo "=== All libraries installed ==="
+          haxelib list
+        env:
+          HAXELIB_ROOT: ${{ github.workspace }}/.haxelib
+
       - name: Verify project configuration
         run: |
           echo "=== Project structure ==="
