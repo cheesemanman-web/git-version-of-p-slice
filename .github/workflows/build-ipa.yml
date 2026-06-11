@@ -1,35 +1,32 @@
-name: please build ipa brochacho
+name: Build iOS IPA
 
 on:
   workflow_dispatch:
   push:
+    branches:
+      - main
+      - master
 
 jobs:
   build-ios:
     runs-on: macos-latest
-
+    
     steps:
-      - name: checkout
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      # =========================
-      # INSTALL HAXE (FIX ARM64 ISSUE)
-      # =========================
-      - name: install haxe and dependencies
+      - name: Setup Haxe and dependencies
         run: |
           brew update
           brew install haxe neko
-
+          
+          # Setup haxelib directory
           mkdir -p $GITHUB_WORKSPACE/.haxelib
-          echo "HAXELIB_ROOT=$GITHUB_WORKSPACE/.haxelib" >> $GITHUB_ENV
-          echo "HAXE_STD_PATH=$(brew --prefix haxe)/lib/haxe/std" >> $GITHUB_ENV
-
           haxelib setup $GITHUB_WORKSPACE/.haxelib
+        env:
+          HAXELIB_ROOT: ${{ github.workspace }}/.haxelib
 
-      # =========================
-      # INSTALL LIBS
-      # =========================
-      - name: Install haxelib deps
+      - name: Install Haxe libraries
         run: |
           haxelib install lime
           haxelib install openfl
@@ -39,28 +36,73 @@ jobs:
           haxelib install hscript
           haxelib install hscript-iris
           haxelib install tjson
+          
+          echo "=== Installed Haxelib libraries ==="
+          haxelib list
+        env:
+          HAXELIB_ROOT: ${{ github.workspace }}/.haxelib
 
-      # =========================
-      # FORCE PROJECT ROOT
-      # =========================
-      - name: verify project
+      - name: Verify project configuration
         run: |
-          ls -R
-          test -f project.xml
+          echo "=== Project structure ==="
+          ls -la
+          
+          if [ -d "PSliceEngine" ]; then
+            echo "=== PSliceEngine directory ==="
+            ls -la PSliceEngine/
+          fi
+          
+          if [ -f "project.xml" ]; then
+            echo "project.xml found in root"
+          elif [ -f "PSliceEngine/project.xml" ]; then
+            echo "project.xml found in PSliceEngine directory"
+          else
+            echo "ERROR: project.xml not found!"
+            exit 1
+          fi
 
-      # =========================
-      # BUILD IOS PLEASE BRO
-      # =========================
-      - name: shut up xcode
+      - name: Build iOS app
         run: |
-          haxelib run lime build ios -nosign
+          echo "=== Starting iOS build ==="
+          haxelib run lime build ios -nosign -verbose 2>&1 | tee build-output.log
+          BUILD_STATUS=${PIPESTATUS[0]}
+          
+          if [ $BUILD_STATUS -ne 0 ]; then
+            echo "=== Build failed with status $BUILD_STATUS ==="
+            cat build-output.log
+            exit $BUILD_STATUS
+          fi
+          
+          echo "=== Build completed successfully ==="
+        env:
+          HAXELIB_ROOT: ${{ github.workspace }}/.haxelib
 
-      # =========================
-      # PACKAGE OUTPUT
-      # =========================
-      - name: YES YES YES
+      - name: Check build output
+        if: success()
+        run: |
+          echo "=== Build artifacts ==="
+          find export -type f -name "*.ipa" -o -name "*.app" 2>/dev/null || true
+          ls -lR export/ || true
+
+      - name: Upload iOS build artifacts
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: pslice-ios-build
           path: |
-            export/release/ios/bin
+            export/release/ios/bin/
+            export/ios/bin/
+          retention-days: 30
+
+      - name: Upload build logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-logs
+          path: build-output.log
+          retention-days: 7
+
+      - name: Cleanup
+        if: always()
+        run: |
+          echo "Build workflow completed"
