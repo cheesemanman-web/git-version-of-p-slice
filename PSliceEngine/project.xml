@@ -29,7 +29,6 @@
     <assets path="assets/fonts"/>
     <assets path="assets/shared"/>
     <assets path="assets/videos" embed="false"/>
-    <assets path="example_mods" rename="mods" embed="false"/>
 
     <!-- Core libraries -->
     <haxelib name="lime"/>
