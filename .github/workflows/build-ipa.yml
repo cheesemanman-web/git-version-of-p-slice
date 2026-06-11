@@ -25,13 +25,20 @@ jobs:
         env:
           HAXELIB_ROOT: ${{ github.workspace }}/.haxelib
 
-      - name: Install haxelib dependencies
+      - name: Install custom git libraries
         run: |
+          echo "=== Installing libraries ==="
+
           haxelib git flixel https://github.com/Psych-Slice/p-slice-1.0-flixel.git 9b1192a23fcfb456123efa14c63c8506ded20e5e --quiet --skip-dependencies
+
           haxelib git flxanimate https://github.com/Psych-Slice/FlxAnimate.git 82a720663f9ed6328d91a727c2b17501d91e3b11 --skip-dependencies
+
           haxelib git funkin.vis https://github.com/FunkinCrew/funkVis 22b1ce089dd924f15cdc4632397ef3504d464e90 --skip-dependencies
+
           haxelib git hxcpp https://github.com/Psych-Slice/hxcpp.git 65b851f749a10c1df34f2ef55836bdec67ee81c2 --quiet --skip-dependencies
+
           haxelib git openfl https://github.com/FunkinCrew/openfl.git c4fa1dcfc384f07bb537e08cae671f9507fe49e6 --quiet --skip-dependencies
+
           haxelib git lime https://github.com/Psych-Slice/lime-pslice.git c6ed780a33cfc07d3fd2fd7325c1428236bc4b61 --quiet
         env:
           HAXELIB_ROOT: ${{ github.workspace }}/.haxelib
@@ -48,27 +55,29 @@ jobs:
         env:
           HAXELIB_ROOT: ${{ github.workspace }}/.haxelib
 
-      - name: Prepare project
+      - name: Verify project
         run: |
-          echo "=== Entering PSliceEngine ==="
-          cd PSliceEngine || true
+          echo "=== Checking project structure ==="
 
-          if [ ! -f "project.xml" ]; then
-            echo "ERROR: project.xml not found in PSliceEngine"
+          if [ ! -f "PSliceEngine/project.xml" ]; then
+            echo "ERROR: project.xml not found"
             exit 1
           fi
-
-          echo "=== Creating required iOS icon folder ==="
-          mkdir -p assets/icons
 
       - name: Build iOS app
         run: |
           cd PSliceEngine
 
-          echo "=== Building iOS IPA ==="
+          echo "=== Creating required xcassets path ==="
+          if [ ! -d "Images.xcassets/AppIcon.appiconset" ]; then
+            echo "ERROR: Missing Images.xcassets/AppIcon.appiconset"
+            exit 1
+          fi
+
+          echo "=== Starting iOS build ==="
 
           haxelib run lime build ios -nosign \
-            -D ios.pslice-icon-dir=assets/icons \
+            -D ios.pslice-icon-dir=Images.xcassets/AppIcon.appiconset \
             -verbose 2>&1 | tee build.log
 
           STATUS=${PIPESTATUS[0]}
@@ -80,6 +89,7 @@ jobs:
           fi
 
       - name: Upload build artifacts
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: pslice-ios-build
