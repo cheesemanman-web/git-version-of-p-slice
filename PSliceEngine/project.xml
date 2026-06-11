@@ -28,11 +28,8 @@
     <!-- Assets -->
     <assets path="assets/fonts"/>
     <assets path="assets/shared"/>
-    <assets path="assets/week_assets" rename="assets"/>
-    <assets path="example_mods" rename="mods" embed="false"/>
-
-    <!-- Only include videos if desired -->
     <assets path="assets/videos" embed="false"/>
+    <assets path="example_mods" rename="mods" embed="false"/>
 
     <!-- Core libraries -->
     <haxelib name="lime"/>
