@@ -10,7 +10,7 @@ on:
 jobs:
   build-ios:
     runs-on: macos-latest
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -19,36 +19,24 @@ jobs:
         run: |
           brew update
           brew install haxe neko
-          
-          # Setup haxelib directory
+
           mkdir -p $GITHUB_WORKSPACE/.haxelib
           haxelib setup $GITHUB_WORKSPACE/.haxelib
         env:
           HAXELIB_ROOT: ${{ github.workspace }}/.haxelib
 
-      - name: Install custom git libraries
+      - name: Install haxelib dependencies
         run: |
-          echo "=== Installing custom git-based libraries ==="
-          
-          # Install flixel fork (must be first)
           haxelib git flixel https://github.com/Psych-Slice/p-slice-1.0-flixel.git 9b1192a23fcfb456123efa14c63c8506ded20e5e --quiet --skip-dependencies
-          
-          # Skip grig.audio - it requires authentication to git.assembla.com
-          # haxelib git grig.audio https://gitlab.com/haxe-grig/grig.audio.git cbf91e2180fd2e374924fe74844086aab7891666
-          
-          # Install other required libraries
           haxelib git flxanimate https://github.com/Psych-Slice/FlxAnimate.git 82a720663f9ed6328d91a727c2b17501d91e3b11 --skip-dependencies
           haxelib git funkin.vis https://github.com/FunkinCrew/funkVis 22b1ce089dd924f15cdc4632397ef3504d464e90 --skip-dependencies
           haxelib git hxcpp https://github.com/Psych-Slice/hxcpp.git 65b851f749a10c1df34f2ef55836bdec67ee81c2 --quiet --skip-dependencies
           haxelib git openfl https://github.com/FunkinCrew/openfl.git c4fa1dcfc384f07bb537e08cae671f9507fe49e6 --quiet --skip-dependencies
           haxelib git lime https://github.com/Psych-Slice/lime-pslice.git c6ed780a33cfc07d3fd2fd7325c1428236bc4b61 --quiet
-          
-          echo "=== All libraries installed ==="
-          haxelib list
         env:
           HAXELIB_ROOT: ${{ github.workspace }}/.haxelib
 
-      - name: Install standard haxelib packages
+      - name: Install standard packages
         run: |
           haxelib install flixel-addons 3.3.2 --quiet --skip-dependencies
           haxelib install flixel-tools 1.5.1 --quiet --skip-dependencies
@@ -60,80 +48,48 @@ jobs:
         env:
           HAXELIB_ROOT: ${{ github.workspace }}/.haxelib
 
-      - name: Verify project configuration
+      - name: Prepare project
         run: |
-          echo "=== Project structure ==="
-          ls -la
-          
-          if [ -d "PSliceEngine" ]; then
-            echo "=== PSliceEngine directory ==="
-            ls -la PSliceEngine/
-          fi
-          
-          if [ -f "project.xml" ]; then
-            echo "project.xml found in root"
-          elif [ -f "PSliceEngine/project.xml" ]; then
-            echo "project.xml found in PSliceEngine directory"
-          else
-            echo "ERROR: project.xml not found!"
+          echo "=== Entering PSliceEngine ==="
+          cd PSliceEngine || true
+
+          if [ ! -f "project.xml" ]; then
+            echo "ERROR: project.xml not found in PSliceEngine"
             exit 1
           fi
+
+          echo "=== Creating required iOS icon folder ==="
+          mkdir -p assets/icons
 
       - name: Build iOS app
         run: |
-          echo "=== Starting iOS build ==="
-          
-          # Determine which directory contains project.xml
-          if [ -f "project.xml" ]; then
-            PROJECT_DIR="."
-          elif [ -f "PSliceEngine/project.xml" ]; then
-            PROJECT_DIR="PSliceEngine"
-          else
-            echo "ERROR: project.xml not found in expected locations!"
-            exit 1
-          fi
-          
-          # Change to the project directory and run build
-          cd "$PROJECT_DIR"
-          haxelib run lime build ios -nosign -verbose 2>&1 | tee build-output.log
-          BUILD_STATUS=${PIPESTATUS[0]}
-          
-          if [ $BUILD_STATUS -ne 0 ]; then
-            echo "=== Build failed with status $BUILD_STATUS ==="
-            cat build-output.log
-            exit $BUILD_STATUS
-          fi
-          
-          echo "=== Build completed successfully ==="
-        env:
-          HAXELIB_ROOT: ${{ github.workspace }}/.haxelib
+          cd PSliceEngine
 
-      - name: Check build output
-        if: success()
-        run: |
-          echo "=== Build artifacts ==="
-          find export -type f -name "*.ipa" -o -name "*.app" 2>/dev/null || true
-          ls -lR export/ || true
+          echo "=== Building iOS IPA ==="
 
-      - name: Upload iOS build artifacts
-        if: success()
+          haxelib run lime build ios -nosign \
+            -D ios.pslice-icon-dir=assets/icons \
+            -verbose 2>&1 | tee build.log
+
+          STATUS=${PIPESTATUS[0]}
+
+          if [ $STATUS -ne 0 ]; then
+            echo "=== BUILD FAILED ==="
+            cat build.log
+            exit $STATUS
+          fi
+
+      - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: pslice-ios-build
           path: |
-            export/release/ios/bin/
-            export/ios/bin/
-          retention-days: 30
+            PSliceEngine/export/release/ios/bin/
+            PSliceEngine/export/ios/bin/
 
-      - name: Upload build logs on failure
+      - name: Upload logs (on failure)
         if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: build-logs
-          path: build-output.log
-          retention-days: 7
-
-      - name: Cleanup
-        if: always()
-        run: |
-          echo "Build workflow completed"
+          path: PSliceEngine/build.log
