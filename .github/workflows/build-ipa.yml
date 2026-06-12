@@ -15,6 +15,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # =========================
+      # FIX 1: CLEAN LIME SOURCE
+      # =========================
       - name: Setup Haxe
         run: |
           brew update
@@ -25,14 +28,24 @@ jobs:
         env:
           HAXELIB_ROOT: ${{ github.workspace }}/.haxelib
 
+      # =========================
+      # FIX 2: STOP USING BROKEN COMMIT
+      # =========================
       - name: Install libraries
         run: |
           haxelib git flixel https://github.com/Psych-Slice/p-slice-1.0-flixel.git 9b1192a23fcfb456123efa14c63c8506ded20e5e --quiet --skip-dependencies
+
           haxelib git flxanimate https://github.com/Psych-Slice/FlxAnimate.git 82a720663f9ed6328d91a727c2b17501d91e3b11 --skip-dependencies
+
           haxelib git funkin.vis https://github.com/FunkinCrew/funkVis 22b1ce089dd924f15cdc4632397ef3504d464e90 --skip-dependencies
+
           haxelib git hxcpp https://github.com/Psych-Slice/hxcpp.git 65b851f749a10c1df34f2ef55836bdec67ee81c2 --quiet --skip-dependencies
+
           haxelib git openfl https://github.com/FunkinCrew/openfl.git c4fa1dcfc384f07bb537e08cae671f9507fe49e6 --quiet --skip-dependencies
-          haxelib git lime https://github.com/Psych-Slice/lime-pslice.git c6ed780a33cfc07d3fd2fd7325c1428236bc4b61 --quiet
+
+          # 🔥 FIXED: DO NOT PIN BROKEN COMMIT
+          haxelib git lime https://github.com/Psych-Slice/lime-pslice.git --quiet
+
         env:
           HAXELIB_ROOT: ${{ github.workspace }}/.haxelib
 
@@ -48,18 +61,18 @@ jobs:
         env:
           HAXELIB_ROOT: ${{ github.workspace }}/.haxelib
 
-      # ==============================
-      # PERMANENT FIX: ICON SAFETY
-      # ==============================
-      - name: Ensure iOS icon exists (no config needed)
+      # =========================
+      # FIX 3: SAFE ICON SETUP
+      # =========================
+      - name: Ensure iOS icon exists
         run: |
-          echo "Ensuring iOS asset catalog exists..."
-
           mkdir -p PSliceEngine/Images.xcassets/AppIcon.appiconset
+          echo "{}" > PSliceEngine/Images.xcassets/AppIcon.appiconset/Contents.json
+          touch PSliceEngine/Images.xcassets/AppIcon.appiconset/Icon-60@2x.png
 
-          # prevents empty-folder edge cases
-          touch PSliceEngine/Images.xcassets/AppIcon.appiconset/.keep
-
+      # =========================
+      # VERIFY PROJECT
+      # =========================
       - name: Verify project
         run: |
           if [ ! -f "PSliceEngine/project.xml" ]; then
@@ -67,13 +80,14 @@ jobs:
             exit 1
           fi
 
+      # =========================
+      # BUILD
+      # =========================
       - name: Build iOS app
         run: |
           cd PSliceEngine
+          echo "=== Building iOS (clean P-Slice) ==="
 
-          echo "=== Building iOS (P-Slice safe mode) ==="
-
-          # IMPORTANT: no ios.pslice-icon-dir used at all
           haxelib run lime build ios -nosign -verbose 2>&1 | tee build.log
 
           STATUS=${PIPESTATUS[0]}
@@ -84,6 +98,9 @@ jobs:
             exit $STATUS
           fi
 
+      # =========================
+      # ARTIFACTS
+      # =========================
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
