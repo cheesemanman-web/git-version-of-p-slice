@@ -1,4 +1,4 @@
-name: Build iOS IPA (Stable)
+name: Build iOS IPA (Fixed)
 
 on:
   workflow_dispatch:
@@ -15,9 +15,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # =========================
-      # SETUP HAXE
-      # =========================
+      # ==============================
+      # FIX: stable haxelib environment
+      # ==============================
       - name: Setup Haxe
         run: |
           brew update
@@ -25,74 +25,72 @@ jobs:
 
           mkdir -p $GITHUB_WORKSPACE/.haxelib
           haxelib setup $GITHUB_WORKSPACE/.haxelib
+
+          # verify haxelib is actually using workspace path
+          haxelib config
+
         env:
           HAXELIB_ROOT: ${{ github.workspace }}/.haxelib
 
-      # =========================
-      # FIX: USE OFFICIAL LIME (IMPORTANT)
-      # =========================
+      # ==============================
+      # FIX: install EVERYTHING explicitly
+      # (no dependency guessing)
+      # ==============================
       - name: Install libraries
         run: |
+          haxelib install hscript --quiet
+          haxelib install hscript-iris --quiet
+
           haxelib git flixel https://github.com/Psych-Slice/p-slice-1.0-flixel.git 9b1192a23fcfb456123efa14c63c8506ded20e5e --quiet --skip-dependencies
-
           haxelib git flxanimate https://github.com/Psych-Slice/FlxAnimate.git 82a720663f9ed6328d91a727c2b17501d91e3b11 --skip-dependencies
-
           haxelib git funkin.vis https://github.com/FunkinCrew/funkVis 22b1ce089dd924f15cdc4632397ef3504d464e90 --skip-dependencies
-
           haxelib git hxcpp https://github.com/Psych-Slice/hxcpp.git 65b851f749a10c1df34f2ef55836bdec67ee81c2 --quiet --skip-dependencies
-
           haxelib git openfl https://github.com/FunkinCrew/openfl.git c4fa1dcfc384f07bb537e08cae671f9507fe49e6 --quiet --skip-dependencies
-
-          # ✅ FIX: REMOVE lime-pslice completely
-          haxelib install lime 8.2.3
+          haxelib git lime https://github.com/Psych-Slice/lime-pslice.git c6ed780a33cfc07d3fd2fd7325c1428236bc4b61 --quiet
 
         env:
           HAXELIB_ROOT: ${{ github.workspace }}/.haxelib
 
-      # =========================
-      # STANDARD LIBS
-      # =========================
+      # ==============================
+      # STANDARD LIBS (stable versions)
+      # ==============================
       - name: Install standard libs
         run: |
           haxelib install flixel-addons 3.3.2 --quiet --skip-dependencies
           haxelib install flixel-tools 1.5.1 --quiet --skip-dependencies
-          haxelib install hscript-iris 1.1.3 --quiet --skip-dependencies
           haxelib install tjson 1.4.0 --quiet --skip-dependencies
           haxelib install hxdiscord_rpc 1.2.4 --quiet --skip-dependencies
+
           haxelib git hxCodec https://github.com/polybiusproxy/hxCodec.git 0a51aed0d9523d22a83e453ce7b593ec7fed4742 --skip-dependencies
           haxelib git linc_luajit https://github.com/superpowers04/linc_luajit 1906c4a96f6bb6df66562b3f24c62f4c5bba14a7 --skip-dependencies
+
         env:
           HAXELIB_ROOT: ${{ github.workspace }}/.haxelib
 
-      # =========================
-      # SAFE ICON SETUP (NO PSYCH RULES TRIGGERED)
-      # =========================
-      - name: Ensure iOS icon folder exists
+      # ==============================
+      # IOS ICON FIX (lime-pslice requirement)
+      # ==============================
+      - name: Ensure iOS icon exists
         run: |
           mkdir -p PSliceEngine/Images.xcassets/AppIcon.appiconset
-          echo "{}" > PSliceEngine/Images.xcassets/AppIcon.appiconset/Contents.json
+          touch PSliceEngine/Images.xcassets/AppIcon.appiconset/.keep
 
-      # =========================
+      # ==============================
       # VERIFY PROJECT
-      # =========================
+      # ==============================
       - name: Verify project
         run: |
-          if [ ! -f "PSliceEngine/project.xml" ]; then
-            echo "Missing project.xml"
-            exit 1
-          fi
+          test -f PSliceEngine/project.xml
 
-      # =========================
-      # BUILD
-      # =========================
+      # ==============================
+      # BUILD IOS
+      # ==============================
       - name: Build iOS app
         run: |
           cd PSliceEngine
+          echo "=== Building iOS (fixed pipeline) ==="
 
-          echo "=== Building iOS (stable Lime) ==="
-
-          haxelib run lime build ios -nosign -verbose 2>&1 | tee build.log
-
+          haxelib run lime build ios -verbose 2>&1 | tee build.log
           STATUS=${PIPESTATUS[0]}
 
           if [ $STATUS -ne 0 ]; then
@@ -101,9 +99,9 @@ jobs:
             exit $STATUS
           fi
 
-      # =========================
+      # ==============================
       # ARTIFACTS
-      # =========================
+      # ==============================
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
