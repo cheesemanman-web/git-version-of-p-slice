@@ -16,7 +16,7 @@ jobs:
         uses: actions/checkout@v4
 
       # ==============================
-      # FIX: stable haxelib environment
+      # Setup Haxe + correct haxelib root
       # ==============================
       - name: Setup Haxe
         run: |
@@ -26,15 +26,21 @@ jobs:
           mkdir -p $GITHUB_WORKSPACE/.haxelib
           haxelib setup $GITHUB_WORKSPACE/.haxelib
 
-          # verify haxelib is actually using workspace path
           haxelib config
 
         env:
           HAXELIB_ROOT: ${{ github.workspace }}/.haxelib
 
       # ==============================
-      # FIX: install EVERYTHING explicitly
-      # (no dependency guessing)
+      # CRITICAL FIX: lime-pslice requirement
+      # (must be set BEFORE lime runs)
+      # ==============================
+      - name: Set lime-pslice required config
+        run: |
+          echo "ios.pslice-icon-dir=bin/ios/PSliceEngine/Images.xcassets/AppIcon.appiconset" >> $GITHUB_ENV
+
+      # ==============================
+      # Install libraries (fully explicit)
       # ==============================
       - name: Install libraries
         run: |
@@ -52,7 +58,7 @@ jobs:
           HAXELIB_ROOT: ${{ github.workspace }}/.haxelib
 
       # ==============================
-      # STANDARD LIBS (stable versions)
+      # Standard libs
       # ==============================
       - name: Install standard libs
         run: |
@@ -68,27 +74,27 @@ jobs:
           HAXELIB_ROOT: ${{ github.workspace }}/.haxelib
 
       # ==============================
-      # IOS ICON FIX (lime-pslice requirement)
+      # iOS asset safety
       # ==============================
-      - name: Ensure iOS icon exists
+      - name: Ensure iOS icon directory exists
         run: |
           mkdir -p PSliceEngine/Images.xcassets/AppIcon.appiconset
           touch PSliceEngine/Images.xcassets/AppIcon.appiconset/.keep
 
       # ==============================
-      # VERIFY PROJECT
+      # Verify project exists
       # ==============================
       - name: Verify project
         run: |
           test -f PSliceEngine/project.xml
 
       # ==============================
-      # BUILD IOS
+      # BUILD
       # ==============================
       - name: Build iOS app
         run: |
           cd PSliceEngine
-          echo "=== Building iOS (fixed pipeline) ==="
+          echo "=== Building iOS (fixed lime-pslice pipeline) ==="
 
           haxelib run lime build ios -verbose 2>&1 | tee build.log
           STATUS=${PIPESTATUS[0]}
@@ -100,7 +106,7 @@ jobs:
           fi
 
       # ==============================
-      # ARTIFACTS
+      # Upload artifacts
       # ==============================
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
