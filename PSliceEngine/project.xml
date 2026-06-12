@@ -1,39 +1,33 @@
-```xml
 <?xml version="1.0" encoding="utf-8"?>
 
-<project
-    xmlns="http://lime.openfl.org/project/1.0.4"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://lime.openfl.org/project/1.0.4 http://lime.openfl.org/xsd/project-1.0.4.xsd">
+<project xmlns="http://lime.openfl.org/project/1.0.4"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://lime.openfl.org/project/1.0.4 http://lime.openfl.org/xsd/project-1.0.4.xsd">
 
     <app
-        title="Friday Night Funkin': P-Slice Engine"
+        title="PSliceEngine"
         file="PSliceEngine"
         package="com.pslice.engine"
         main="Main"
         version="1.0.0"
         company="pslice" />
 
-    <window
-        width="1280"
-        height="720"
-        fps="60"
-        background="#000000"
-        hardware="true"
-        vsync="false" />
+    <window width="1280" height="720" fps="60" background="#000000" />
 
-    <!-- Source -->
     <classpath name="source" />
 
-    <!-- iOS icon asset catalog -->
-    <set name="ios.pslice-icon-dir" value="Images.xcassets" if="ios" />
+    <!-- ========================= -->
+    <!-- CRITICAL FIX (THIS ONE)   -->
+    <!-- ========================= -->
+
+    <set name="ios.pslice-icon-dir" value="Images.xcassets/AppIcon.appiconset" />
 
     <!-- Assets -->
     <assets path="assets/fonts" />
     <assets path="assets/shared" />
     <assets path="assets/videos" embed="false" />
 
-    <!-- Libraries -->
+    <!-- Libs -->
     <haxelib name="lime" />
     <haxelib name="openfl" />
     <haxelib name="flixel" />
@@ -46,6 +40,6 @@
     <define name="MODS_ALLOWED" />
     <define name="HSCRIPT_ALLOWED" />
     <define name="LUA_ALLOWED" />
+    <define name="MOBILE" />
 
 </project>
-```
