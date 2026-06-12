@@ -1,4 +1,4 @@
-name: Build iOS IPA (Fixed)
+name: Build iOS IPA (Stable)
 
 on:
   workflow_dispatch:
@@ -16,7 +16,7 @@ jobs:
         uses: actions/checkout@v4
 
       # =========================
-      # FIX 1: CLEAN LIME SOURCE
+      # SETUP HAXE
       # =========================
       - name: Setup Haxe
         run: |
@@ -29,7 +29,7 @@ jobs:
           HAXELIB_ROOT: ${{ github.workspace }}/.haxelib
 
       # =========================
-      # FIX 2: STOP USING BROKEN COMMIT
+      # FIX: USE OFFICIAL LIME (IMPORTANT)
       # =========================
       - name: Install libraries
         run: |
@@ -43,12 +43,15 @@ jobs:
 
           haxelib git openfl https://github.com/FunkinCrew/openfl.git c4fa1dcfc384f07bb537e08cae671f9507fe49e6 --quiet --skip-dependencies
 
-          # 🔥 FIXED: DO NOT PIN BROKEN COMMIT
-          haxelib git lime https://github.com/Psych-Slice/lime-pslice.git --quiet
+          # ✅ FIX: REMOVE lime-pslice completely
+          haxelib install lime 8.2.3
 
         env:
           HAXELIB_ROOT: ${{ github.workspace }}/.haxelib
 
+      # =========================
+      # STANDARD LIBS
+      # =========================
       - name: Install standard libs
         run: |
           haxelib install flixel-addons 3.3.2 --quiet --skip-dependencies
@@ -62,13 +65,12 @@ jobs:
           HAXELIB_ROOT: ${{ github.workspace }}/.haxelib
 
       # =========================
-      # FIX 3: SAFE ICON SETUP
+      # SAFE ICON SETUP (NO PSYCH RULES TRIGGERED)
       # =========================
-      - name: Ensure iOS icon exists
+      - name: Ensure iOS icon folder exists
         run: |
           mkdir -p PSliceEngine/Images.xcassets/AppIcon.appiconset
           echo "{}" > PSliceEngine/Images.xcassets/AppIcon.appiconset/Contents.json
-          touch PSliceEngine/Images.xcassets/AppIcon.appiconset/Icon-60@2x.png
 
       # =========================
       # VERIFY PROJECT
@@ -86,7 +88,8 @@ jobs:
       - name: Build iOS app
         run: |
           cd PSliceEngine
-          echo "=== Building iOS (clean P-Slice) ==="
+
+          echo "=== Building iOS (stable Lime) ==="
 
           haxelib run lime build ios -nosign -verbose 2>&1 | tee build.log
 
