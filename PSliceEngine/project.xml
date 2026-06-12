@@ -1,19 +1,51 @@
-<project>
+<?xml version="1.0" encoding="utf-8"?>
 
-    <app title="PSliceEngine"
-         file="PSliceEngine"
-         package="com.pslice.engine"
-         main="Main"
-         version="1.0.0" />
+<project xmlns="http://lime.openfl.org/project/1.0.4"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://lime.openfl.org/project/1.0.4 http://lime.openfl.org/xsd/project-1.0.4.xsd">
 
-    <window width="1280" height="720" fps="60" />
+    <!-- ===================== -->
+    <!-- APP CONFIG -->
+    <!-- ===================== -->
+    <app
+        title="Friday Night Funkin': P-Slice Engine"
+        file="PSliceEngine"
+        package="com.pslice.engine"
+        main="Main"
+        version="1.0.0"
+        company="pslice" />
 
+    <window
+        width="1280"
+        height="720"
+        fps="60"
+        background="#000000"
+        hardware="true"
+        vsync="false" />
+
+    <!-- ===================== -->
+    <!-- SOURCE -->
+    <!-- ===================== -->
     <classpath name="source" />
 
-    <assets path="assets/fonts" />
+    <!-- ===================== -->
+    <!-- SAFE ASSET PATHS ONLY -->
+    <!-- (NO WEEK_ASSETS - THIS WAS BREAKING BUILD) -->
+    <!-- ===================== -->
     <assets path="assets/shared" />
+    <assets path="assets/fonts" />
+
+    <!-- videos optional -->
     <assets path="assets/videos" embed="false" />
 
+    <!-- ===================== -->
+    <!-- OPTIONAL SAFETY: prevents empty asset crashes -->
+    <!-- ===================== -->
+    <assets path="assets" if="html5" />
+
+    <!-- ===================== -->
+    <!-- LIBRARIES -->
+    <!-- ===================== -->
     <haxelib name="lime" />
     <haxelib name="openfl" />
     <haxelib name="flixel" />
@@ -21,5 +53,22 @@
     <haxelib name="hxcpp" />
     <haxelib name="tjson" />
     <haxelib name="hscript-iris" />
+
+    <!-- ===================== -->
+    <!-- DEFINES -->
+    <!-- ===================== -->
+    <define name="MODS_ALLOWED" />
+    <define name="HSCRIPT_ALLOWED" />
+    <define name="PSYCH_LUA" />
+    <define name="LUA_ALLOWED" />
+    <define name="PSYCH_WATERMARKS" />
+    <define name="BASE_GAME_FILES" />
+    <define name="MOBILE" />
+
+    <!-- ===================== -->
+    <!-- FIX: prevents iOS icon enforcement crash -->
+    <!-- (only used if your lime fork still checks it) -->
+    <!-- ===================== -->
+    <set name="ios.pslice-icon-dir" value="Images.xcassets/AppIcon.appiconset" if="ios" />
 
 </project>
