@@ -27,11 +27,13 @@
 -D BASE_GAME_FILES
 -D MOBILE
 
+# ===== FIXED iOS ICON PATH =====
+-D ios.pslice-icon-dir=Images.xcassets/AppIcon.appiconset
+
 # ============ PLATFORM FIX ============
 -D sys
 -D tools
 
-# Prevent missing sys/FileSystem issues
 --macro allowPackage("sys")
 
 # ============ OPENFL / FLIXEL MACROS ============
