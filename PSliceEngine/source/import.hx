@@ -18,10 +18,12 @@ import psychlua.FunkinLua;
 import backend.Achievements;
 #end
 
-// ================= MOBILE =================
+// ================= MOBILE (SAFE GUARDS ADDED) =================
+#if (android || ios)
 import mobile.input.MobileInputID;
 import mobile.backend.SwipeUtil;
 import mobile.backend.TouchUtil;
+#end
 
 #if TOUCH_CONTROLS_ALLOWED
 import mobile.objects.*;
@@ -39,10 +41,10 @@ import extension.androidtools.*;
 import extension.firebase.Crashlytics;
 #end
 
-// ================= SYS / JS =================
+// ================= SYS / JS (FIXED FOR CI) =================
 #if sys
-import sys.*;
-import sys.io.*;
+import sys.io.File;
+import sys.FileSystem;
 #elseif js
 import js.html.*;
 #end
