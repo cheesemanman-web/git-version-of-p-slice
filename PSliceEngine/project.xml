@@ -5,29 +5,30 @@
          xsi:schemaLocation="http://lime.openfl.org/project/1.0.4 http://lime.openfl.org/xsd/project-1.0.4.xsd">
 
     <app
-        title="PSliceEngine"
+        title="Friday Night Funkin': P-Slice Engine"
         file="PSliceEngine"
         package="com.pslice.engine"
         main="Main"
         version="1.0.0"
         company="pslice" />
 
-    <window width="1280" height="720" fps="60" background="#000000" />
+    <window
+        width="1280"
+        height="720"
+        fps="60"
+        background="#000000"
+        hardware="true"
+        vsync="false" />
 
+    <!-- Source -->
     <classpath name="source" />
-
-    <!-- ========================= -->
-    <!-- CRITICAL FIX (THIS ONE)   -->
-    <!-- ========================= -->
-
-    <set name="ios.pslice-icon-dir" value="Images.xcassets/AppIcon.appiconset" />
 
     <!-- Assets -->
     <assets path="assets/fonts" />
     <assets path="assets/shared" />
     <assets path="assets/videos" embed="false" />
 
-    <!-- Libs -->
+    <!-- Libraries -->
     <haxelib name="lime" />
     <haxelib name="openfl" />
     <haxelib name="flixel" />
