@@ -21,15 +21,15 @@
         hardware="true"
         vsync="false" />
 
-    <!-- Source -->
     <classpath name="source" />
 
-    <!-- Assets -->
+    <!-- iOS icon directory -->
+    <set name="ios.pslice-icon-dir" value="Images.xcassets/AppIcon.appiconset" if="ios" />
+
     <assets path="assets/fonts" />
     <assets path="assets/shared" />
     <assets path="assets/videos" embed="false" />
 
-    <!-- Libraries -->
     <haxelib name="lime" />
     <haxelib name="openfl" />
     <haxelib name="flixel" />
@@ -38,7 +38,6 @@
     <haxelib name="tjson" />
     <haxelib name="hscript-iris" />
 
-    <!-- Defines -->
     <define name="MODS_ALLOWED" />
     <define name="HSCRIPT_ALLOWED" />
     <define name="LUA_ALLOWED" />
